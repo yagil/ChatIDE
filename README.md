@@ -28,4 +28,4 @@ This is an early prototype, use at your own peril.
 
 ## Credits
 
-Co-authored with ChatGPT.
+ChatIDE was built using ChatIDE.
