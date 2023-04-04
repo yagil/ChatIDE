@@ -39,7 +39,9 @@ export function activate(context: vscode.ExtensionContext) {
           {
             // allow the extension to reach chatide.js
             localResourceRoots: [vscode.Uri.file(path.join(__dirname, '..'))],
-            enableScripts: true
+            enableScripts: true,
+            // Retain the context when the webview becomes hidden
+            retainContextWhenHidden: true,
           },
       );
 
