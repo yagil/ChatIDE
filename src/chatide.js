@@ -9,11 +9,26 @@ document.addEventListener("DOMContentLoaded", () => {
         autoResize(this);
     });
 
+    document.getElementById('reset-button').addEventListener('click', () => {
+      vscode.postMessage({
+        command: 'resetChat'
+      });
+    });
+
+    document.getElementById('export-button').addEventListener('click', () => {
+      vscode.postMessage({
+        command: 'exportChat'
+      });
+    });
+
     window.addEventListener("message", (event) => {
         const message = event.data;
         switch (message.command) {
           case "gptResponse":
             addMessage("assistant", message.token, true);
+            break;
+          case "resetChatComplete":
+            messagesContainer.innerHTML = "";
             break;
         }
     });
@@ -29,15 +44,14 @@ document.addEventListener("DOMContentLoaded", () => {
           messagesContainer.insertAdjacentElement("beforeend", messageElement);
         }
 
-        messageElement.innerHTML = content
-
+        messageElement.innerHTML = content;
       } else {
         messageElement = document.createElement("div");
         messageElement.className = role === "user" ? "user-message" : "assistant-message";
         
         messagesContainer.insertAdjacentElement("beforeend", messageElement);
 
-        messageElement.textContent = content
+        messageElement.textContent = content;
       }
     
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -47,8 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const input = document.getElementById("message-input");
         const userMessage = input.value;
         input.value = "";
+        autoResize(input);
       
-        if (!userMessage) return;
+        if (!userMessage) {
+          return;
+        }
       
         addMessage("user", userMessage, false);
 

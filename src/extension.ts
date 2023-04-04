@@ -3,22 +3,23 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as marked from 'marked';
+import * as fs from 'fs';
 
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 
 let openai: OpenAIApi;
-
-var messages: ChatCompletionRequestMessage[] = [
-  {"role": "system", "content": "You are a helpful coding assistant running inside VS Code."}
-];
+let messages: ChatCompletionRequestMessage[] = [];
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  
+  resetChat();
+
   context.subscriptions.push(
     vscode.commands.registerCommand('chatide.openSettings', openSettings)
   );
-  
+
   const apiKey = vscode.workspace.getConfiguration('chatide').get('apiKey');
   if (!apiKey) {
     vscode.window.showErrorMessage('No API key found in the ChatIDE settings. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
@@ -45,14 +46,16 @@ export function activate(context: vscode.ExtensionContext) {
           },
       );
 
-
       let jsPathUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "chatide.js")));
       const jsPath = chatIdePanel.webview.asWebviewUri(jsPathUri).toString();
 
       let cssUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "chatide.css")));
       const cssPath = chatIdePanel.webview.asWebviewUri(cssUri).toString();
 
-      chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString());
+      const model = vscode.workspace.getConfiguration('chatide').get('model') || "No model configured";
+
+      const configDetails = `Model: ${model.toString()}`;
+      chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString(), configDetails);
       chatIdePanel.webview.onDidReceiveMessage(
           async (message) => {
             switch (message.command) {
@@ -61,12 +64,26 @@ export function activate(context: vscode.ExtensionContext) {
                   chatIdePanel.webview.postMessage({ command: "gptResponse", token });
                 }
                 return;
+              case "resetChat":
+                resetChat();
+                chatIdePanel.webview.postMessage({ command: "resetChatComplete" });
+                return;
+              case "exportChat":
+                await exportChat();
+                return;
             }
           },
           null,
           context.subscriptions
       );
-        
+
+      chatIdePanel.onDidDispose(
+        () => {
+          console.log('WebView closed');
+        },
+        null,
+        context.subscriptions
+      );
   });
 
   context.subscriptions.push(disposable);
@@ -76,7 +93,7 @@ function openSettings() {
   vscode.commands.executeCommand('workbench.action.openSettings', 'chatide');
 }
 
-function getWebviewContent(chatideJsPath: string, chatideCssPath: string) {
+function getWebviewContent(chatideJsPath: string, chatideCssPath: string, configDetails: string) {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -88,7 +105,14 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string) {
     </head>
     <body>
         <div id="chat-container">
-            <h1 id="chat-title">ChatIDE</h1>
+            <div id="chat-header">
+              <div id="chat-control">
+                <h1 id="chat-title">ChatIDE</h1>
+                <button id="reset-button" class="control-btn">Reset Chat</button>
+                <button id="export-button" class="control-btn">Export Messages</button>
+              </div>
+              <p id="config-details">${configDetails}</p>
+            </div>
             <div id="messages"></div>
             <div class="chat-bar">
               <textarea id="message-input" spellcheck="true" oninput="autoResize(this)" placeholder="Type your question here..."></textarea>
@@ -96,54 +120,63 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string) {
             </div>
         </div>
         <script src="${chatideJsPath}"></script>
-        <script>
-          function autoResize(textarea) {
-              textarea.style.height = 'auto';
-              textarea.style.height = textarea.scrollHeight + 'px';
-          }
-        </script>
      </body>
   </html>
   `;
 }
 
+function resetChat() {
+  let systemPrompt: any = vscode.workspace.getConfiguration('chatide').get('systemPrompt');
+  if (!systemPrompt) {
+    vscode.window.showErrorMessage('No system prompt found in the ChatIDE settings. Please add your system prompt using the "Open ChatIDE Settings" command and restart the extension.');
+    return;
+  }
+
+  messages = [];
+  messages.push({"role": "system", "content": systemPrompt.toString()});
+}
+
 async function* getGptResponse(userMessage: string) {
-    messages.push({"role": "user", "content": userMessage});
+  messages.push({"role": "user", "content": userMessage});
 
+  const maxTokens = vscode.workspace.getConfiguration('chatide').get('maxLength');
+  if (!maxTokens) {
+    vscode.window.showErrorMessage('No max length found in the ChatIDE settings. Please add your max length using the "Open ChatIDE Settings" command and restart the extension.');
+    return;
+  }
 
-    const maxTokens = vscode.workspace.getConfiguration('chatide').get('maxLength');
-    if (!maxTokens) {
-      vscode.window.showErrorMessage('No max length found in the ChatIDE settings. Please add your max length using the "Open ChatIDE Settings" command and restart the extension.');
-      return;
-    }
+  const temperature = vscode.workspace.getConfiguration('chatide').get('temperature');
+  if (temperature === undefined) {
+    vscode.window.showErrorMessage('No temperature found in the ChatIDE settings. Please add your temperature using the "Open ChatIDE Settings" command and restart the extension.');
+    return;
+  }
 
-    const temperature = vscode.workspace.getConfiguration('chatide').get('temperature');
-    if (!temperature) {
-      vscode.window.showErrorMessage('No temperature found in the ChatIDE settings. Please add your temperature using the "Open ChatIDE Settings" command and restart the extension.');
-      return;
-    }
+  const model = vscode.workspace.getConfiguration('chatide').get('model');
+  if (!model) {
+    vscode.window.showErrorMessage("No model found in the ChatIDE settings. Please add your model using the 'Open ChatIDE Settings' command and restart the extension.");
+    return;
+  }
 
-    const model = vscode.workspace.getConfiguration('chatide').get('model');
-    if (!model) {
-      vscode.window.showErrorMessage("No model found in the ChatIDE settings. Please add your model using the 'Open ChatIDE Settings' command and restart the extension.");
-      return;
-    }
+  const maxTokensNumber = Number(maxTokens);
+  const temperatureNumber = Number(temperature);
+  const modelString = model.toString();
 
-    const maxTokensNumber = Number(maxTokens);
-    const temperatureNumber = Number(temperature);
-    const modelString = model.toString();
-
+  try {
     const res = await openai.createChatCompletion({
-        model: modelString,
-        messages: messages,
-        max_tokens: maxTokensNumber,
-        temperature: temperatureNumber,
-        stream: true,
+      model: modelString,
+      messages: messages,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      max_tokens: maxTokensNumber,
+      temperature: temperatureNumber,
+      stream: true,
     }, { responseType: 'stream' });
 
     for await (const token of streamToTokens(res)) {
       yield token;
     }
+  } catch (error: any) {
+    console.error('Error fetching stream:', error);
+  }
 }
 
 async function* streamToTokens(stream: any) {
@@ -159,7 +192,7 @@ async function* streamToTokens(stream: any) {
               const message = line.replace(/^data: /, '');
               if (message === '[DONE]') {
                   messages.push({"role": "assistant", "content": gptMessage});
-                  return
+                  return;
               }
               try {
                   const json = JSON.parse(message);
@@ -179,5 +212,28 @@ async function* streamToTokens(stream: any) {
   }
 }
 
+async function exportChat() {
+  const options: vscode.SaveDialogOptions = {
+      filters: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'JSON': ['json']
+      }
+  };
+
+  const fileUri = await vscode.window.showSaveDialog(options);
+  if (fileUri) {
+      const content = JSON.stringify(messages, null, 2);
+      fs.writeFile(fileUri.fsPath, content, (err) => {
+          if (err) {
+              vscode.window.showErrorMessage('Failed to export messages: ' + err.message);
+          } else {
+              vscode.window.showInformationMessage('Messages exported successfully!');
+          }
+      });
+  }
+}
+
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+  console.log("Deactivating ChatIDE extension.");
+}

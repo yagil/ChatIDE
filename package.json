@@ -42,21 +42,31 @@
           "description": "Enter your OpenAI API Key to make API calls via ChatIDE.",
           "scope": "window"
         },
+        "chatide.systemPrompt": {
+          "type": "string",
+          "default": "You are a helpful programming assistant running inside VS Code.",
+          "markdownDescription": "The system prompt to use for the generated text. Keep in mind that some models pay stronger attention to the system prompt than others.",
+          "scope": "window",
+          "editorType": "string",
+          "editorMultiline": true
+        },
         "chatide.model": {
           "type": "string",
           "default": "gpt-4",
-          "description": "Set the model to use for the generated text.",
+          "description": "Set the model to use for the generated text. Only Chat models are supported.",
           "scope": "window"
         },
         "chatide.maxLength": {
           "type": "integer",
           "default": 1000,
+          "minimum": 1,
           "description": "Set the maximum length for the generated text (aka max_tokens).",
           "scope": "window"
         },
         "chatide.temperature": {
           "type": "number",
-          "default": 0,
+          "default": 0.7,
+          "minimum": 0,
           "description": "Set the temperature for controlling the randomness of the generated text.",
           "scope": "window"
         }
