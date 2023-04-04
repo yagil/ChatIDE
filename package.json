@@ -1,0 +1,95 @@
+{
+  "name": "chatide",
+  "displayName": "ChatIDE",
+  "description": "Chat with GPT inside VSCode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.77.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "chatide.start",
+        "title": "Start ChatIDE"
+      },
+      {
+        "command": "chatide.openSettings",
+        "title": "Open ChatIDE Settings"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "cmd+shift+i",
+        "command": "chatide.start",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "ChatIDE",
+      "properties": {
+        "chatide.apiKey": {
+          "type": "string",
+          "default": "<ENTER YOUR API KEY HERE>",
+          "description": "Enter your OpenAI API Key to make API calls via ChatIDE.",
+          "scope": "window"
+        },
+        "chatide.model": {
+          "type": "string",
+          "default": "gpt-4",
+          "description": "Set the model to use for the generated text.",
+          "scope": "window"
+        },
+        "chatide.maxLength": {
+          "type": "integer",
+          "default": 1000,
+          "description": "Set the maximum length for the generated text (aka max_tokens).",
+          "scope": "window"
+        },
+        "chatide.temperature": {
+          "type": "number",
+          "default": 0,
+          "description": "Set the temperature for controlling the randomness of the generated text.",
+          "scope": "window"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/marked": "^4.0.8",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.77.0",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "@vscode/test-electron": "^2.3.0",
+    "eslint": "^8.36.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.5",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "marked": "^4.3.0",
+    "openai": "^3.2.1"
+  }
+}
