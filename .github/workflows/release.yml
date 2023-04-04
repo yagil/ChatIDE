@@ -23,9 +23,6 @@ jobs:
       - name: Install vsce
         run: npm install -g vsce
 
-      - name: Run build
-        run: npm run build
-
       - name: Package VSIX
         run: vsce package
 
