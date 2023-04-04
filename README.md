@@ -3,7 +3,11 @@
 ## Installation
 
 1. Download the latest `.vsix` file from the releases page
-2. Right click the file from the VS Code explorer page and choose `Install Extension VSIX`.
+2. Open VS Code and launch the Extensions pane (`Shift + Cmd + X`)
+3. Click the "..." menu item on the far right
+4. Choose "Install from VSIX"
+<img width="293" alt="image" src="https://user-images.githubusercontent.com/3611042/229669541-9a36ff37-2506-4209-99e7-de9f08491436.png">
+
 
 ## Configuration
 - Use the `Cmd + Shift + P` keychord and type `>Open ChatIDE Settings`
