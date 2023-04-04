@@ -1,6 +1,6 @@
 # ChatIDE - Converse with ChatGPT inside VS Code
 
-## Installation (the hard way. Easier way coming soon)
+## Installation
 
 1. Download the latest `.vsix` file from the releases page
 2. Right click the file from the VS Code explorer page and choose `Install Extension VSIX`.
