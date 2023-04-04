@@ -19,7 +19,7 @@
 1. Bring up ChatIDE with `Cmd + Shift + i`
 2. Enjoy!
 
-<img width="1838" alt="image" src="https://user-images.githubusercontent.com/3611042/229662498-b91fb0b2-380b-4d45-811f-4e114afb3016.png">
+<img width="1840" alt="image" src="https://user-images.githubusercontent.com/3611042/229670133-bdc62d19-7c7f-4668-b9bb-b23408932b52.png">
 
 #### ChatIDE helping me write a github action to cut new releases for ChatIDE
 
