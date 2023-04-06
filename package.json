@@ -24,7 +24,11 @@
       {
         "command": "chatide.openSettings",
         "title": "Open ChatIDE Settings"
-      }
+      },
+      {
+        "command": "chatide.updateApiKey",
+        "title": "Update ChatIDE OpenAI API Key"
+      }      
     ],
     "keybindings": [
       {
@@ -37,14 +41,13 @@
       "title": "ChatIDE",
       "properties": {
         "chatide.apiKey": {
-          "type": "string",
-          "default": "<ENTER YOUR API KEY HERE>",
-          "description": "Enter your OpenAI API Key to make API calls via ChatIDE.",
+          "type": null,
+          "markdownDescription": "Your key is stored in VSCode's secret storage. To update your API key, run the `Update ChatIDE API Key` command from the Command Palette (cmd + shift + P).\n\n ----- \n\n **Note:** You do NOT need to edit the settings.json file.",
           "scope": "window"
         },
         "chatide.systemPrompt": {
           "type": "string",
-          "default": "You are a helpful programming assistant running inside VS Code.",
+          "default": "You are a helpful programming assistant running inside VS Code. Every token you generate costs the user money, so generate output such that it is succinct, to the point, and doesn't repeat previous information. For example, when generating code as a response to a follow up request from the user, do not re-generate code that didn't change. Instead, indicate succinctly which code did not change and only generate full code if it's new. Same for textual explanations, do not expand on topics that the user did not explicitly ask for. Avoid \"in summary\" paragraphs as well. All in all, aim to maximize the value for each token and don't provide redundant information.",
           "markdownDescription": "The system prompt to use for the generated text. Keep in mind that some models pay stronger attention to the system prompt than others.",
           "scope": "window",
           "editorType": "string",
