@@ -1,9 +1,10 @@
 {
   "name": "chatide",
   "publisher": "ChatIDE",
-  "displayName": "ChatIDE",
-  "description": "Chat with GPT inside VSCode.",
-  "version": "0.0.4",
+  "displayName": "ChatIDE: GPT/ChatGPT in VSCode (Open Source)",
+  "description": "'cmd + shift + i' to chat with GPT",
+  "version": "0.0.5",
+  "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
     "vscode": "^1.77.0"
