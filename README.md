@@ -1,4 +1,9 @@
-<h1 align="center"> 💬 ChatIDE - Talk with ChatGPT inside VS Code <h1>
+<h1 align="center">
+  💬🤖 ChatIDE
+  <h3 align='center'>
+    Converse with ChatGPT inside VS Code
+  </h3>
+<h1>
 <p align="center">
   <img width="1024" alt="image" src="https://user-images.githubusercontent.com/3611042/229839944-e632e394-76fe-427a-8c85-216481302526.png">
 </p>
@@ -6,7 +11,7 @@
 ## Usage
 
 1. Bring up ChatIDE with `Cmd + Shift + i`
-2. Enjoy!
+2. Enjoy a trusty assistant by your side in all of your vscode projects
 
 ## Installation
 
@@ -18,13 +23,16 @@
 <img width="293" alt="image" src="https://user-images.githubusercontent.com/3611042/229669541-9a36ff37-2506-4209-99e7-de9f08491436.png">
 
 ## Configuration
+
 - Use the `Cmd + Shift + P` keychord and type `>Open ChatIDE Settings`
-  - Enter OpenAI API key
   - Choose your preferred `model`, `max_tokens`, and `temperature`.
+  - If you don't have access to `gpt-4`, choose another chat model e.g. `gpt-3.5-turbo` (only Chat models are supported)
   - Adjust the system prompt to your liking
   - Note: settings will auto save
+- Run ChatIDE with `Cmd + Shift + i`. You'll be asked for your OpenAI API key on first time you launch it.
+  - Note: your API key will be stored in [VS Code's `secretStorage`](https://code.visualstudio.com/api/references/vscode-api#SecretStorage)
 <p align="center">
-   <img width="1024" alt="image" src="https://user-images.githubusercontent.com/3611042/229840253-3dff3a5a-5ef8-4b3f-b170-8c8d8025fd8e.png">
+   <img width="1024" alt="image" src="https://user-images.githubusercontent.com/3611042/230432480-71859aec-d54a-48fb-a113-2ca9d28ae3ce.png">
 </p>
 
 ## Known issues
@@ -35,7 +43,8 @@
 
 ## Warning
 
-This is an early prototype, use at your own peril.
+⚠️ This is an early prototype, use at your own peril.
+🧐 Remember to keep an eye on your OpenAI billing.
 
 ## Credits
 
