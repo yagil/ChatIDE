@@ -10,51 +10,51 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById('reset-button').addEventListener('click', () => {
-      vscode.postMessage({
-        command: 'resetChat'
-      });
+        vscode.postMessage({
+            command: 'resetChat'
+        });
     });
 
     document.getElementById('export-button').addEventListener('click', () => {
-      vscode.postMessage({
-        command: 'exportChat'
-      });
+        vscode.postMessage({
+            command: 'exportChat'
+        });
     });
 
     window.addEventListener("message", (event) => {
         const message = event.data;
         switch (message.command) {
-          case "gptResponse":
+        case "gptResponse":
             addMessage("assistant", message.token, true);
             break;
-          case "resetChatComplete":
+        case "resetChatComplete":
             messagesContainer.innerHTML = "";
             break;
         }
     });
 
     function addMessage(role, content, streaming = false) {
-      let messageElement;
+        let messageElement;
     
-      if (streaming) {
-        messageElement = document.querySelector(`.${role}-message:last-child`);
-        if (!messageElement) {
-          messageElement = document.createElement("div");
-          messageElement.className = role === "user" ? "user-message" : "assistant-message";
-          messagesContainer.insertAdjacentElement("beforeend", messageElement);
-        }
+        if (streaming) {
+            messageElement = document.querySelector(`.${role}-message:last-child`);
+            if (!messageElement) {
+                messageElement = document.createElement("div");
+                messageElement.className = role === "user" ? "user-message" : "assistant-message";
+                messagesContainer.insertAdjacentElement("beforeend", messageElement);
+            }
 
-        messageElement.innerHTML = content;
-      } else {
-        messageElement = document.createElement("div");
-        messageElement.className = role === "user" ? "user-message" : "assistant-message";
+            messageElement.innerHTML = content;
+        } else {
+            messageElement = document.createElement("div");
+            messageElement.className = role === "user" ? "user-message" : "assistant-message";
         
-        messagesContainer.insertAdjacentElement("beforeend", messageElement);
+            messagesContainer.insertAdjacentElement("beforeend", messageElement);
 
-        messageElement.textContent = content;
-      }
+            messageElement.textContent = content;
+        }
     
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
     
     function sendMessage() {
@@ -64,18 +64,18 @@ document.addEventListener("DOMContentLoaded", () => {
         autoResize(input);
       
         if (!userMessage) {
-          return;
+            return;
         }
       
         addMessage("user", userMessage, false);
 
         vscode.postMessage(
-          {
-            command: "getGptResponse",
-            userMessage,
-          }
+            {
+                command: "getGptResponse",
+                userMessage,
+            }
         );
-      }
+    }
 });
 
 function autoResize(textarea) {
