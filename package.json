@@ -1,8 +1,9 @@
 {
   "name": "chatide",
+  "publisher": "ChatIDE",
   "displayName": "ChatIDE",
   "description": "Chat with GPT inside VSCode",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.77.0"
   },
