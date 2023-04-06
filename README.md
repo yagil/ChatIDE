@@ -1,13 +1,19 @@
-#  💬🤖 ChatIDE - Converse with ChatGPT inside VS Code
+# ChatIDE - Converse with ChatGPT inside VS Code
 
-Launch ChatIDE with `Cmd + Shift + i` and use it just like you would use ChatGPT in the browser.
+🤖 Launch ChatIDE with `Cmd + Shift + i`.<br>
+💬 Use it just like you would use ChatGPT in the browser.
+<br>
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### Demo (sped up 4x)
-https://user-images.githubusercontent.com/3611042/230437890-2b9870b8-1bfb-404a-abe4-8457b782e709.mp4
+[![Demo video]()](https://user-images.githubusercontent.com/3611042/230437890-2b9870b8-1bfb-404a-abe4-8457b782e709.mp4)
 
 ## Installation
 
-Grab the latest ChatIDE version from the Extensions Marketplace: https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide
+Grab the latest ChatIDE version from the Extensions Marketplace:
+
+https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide
 
 ## Usage
 
