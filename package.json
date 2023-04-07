@@ -2,8 +2,8 @@
   "name": "chatide",
   "publisher": "ChatIDE",
   "displayName": "ChatIDE: GPT/ChatGPT in VSCode (Open Source)",
-  "description": "'cmd + shift + i' to chat with GPT",
-  "version": "0.0.5",
+  "description": "Bring up ChatGPT with 'cmd + shift + i' ",
+  "version": "0.0.6",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
