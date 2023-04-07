@@ -21,6 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    document.getElementById('import-button').addEventListener('click', () => {
+        vscode.postMessage({
+            command: 'importChat'
+        });
+    });
+
     window.addEventListener("message", (event) => {
         const message = event.data;
         switch (message.command) {
@@ -30,30 +36,52 @@ document.addEventListener("DOMContentLoaded", () => {
         case "resetChatComplete":
             messagesContainer.innerHTML = "";
             break;
+        case "loadChatComplete":
+            message.messages.forEach((message) => {
+                addMessage(message.role, message.content);
+            }
+            );
         }
     });
 
     function addMessage(role, content, streaming = false) {
+        let className;
+        switch (role) {
+        case "user":
+            className = "user-message";
+            break;
+        case "assistant":
+            className = "assistant-message";
+            break;
+        case "system":
+            className = "system-message";
+            break;
+        default:
+            throw new Error(`Unknown role: ${role}`);
+        }
+
         let messageElement;
-    
+
         if (streaming) {
             messageElement = document.querySelector(`.${role}-message:last-child`);
             if (!messageElement) {
                 messageElement = document.createElement("div");
-                messageElement.className = role === "user" ? "user-message" : "assistant-message";
-                messagesContainer.insertAdjacentElement("beforeend", messageElement);
+                messageElement.className = className;
             }
-
-            messageElement.innerHTML = content;
         } else {
             messageElement = document.createElement("div");
-            messageElement.className = role === "user" ? "user-message" : "assistant-message";
-        
-            messagesContainer.insertAdjacentElement("beforeend", messageElement);
-
-            messageElement.textContent = content;
+            messageElement.className = className;
         }
-    
+
+        if (role === "user") {
+            // The user's message is plain text.
+            messageElement.textContent = content;
+        } else {
+            // The assistant's message is HTML (Markdown).
+            messageElement.innerHTML = content;
+        }
+
+        messagesContainer.insertAdjacentElement("beforeend", messageElement);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
     

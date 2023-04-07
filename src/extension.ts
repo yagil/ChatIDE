@@ -14,7 +14,8 @@ let messages: ChatCompletionRequestMessage[] = [];
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  
+    console.log("activate chatide");
+      
     resetChat();
 
     context.subscriptions.push(
@@ -34,14 +35,30 @@ export function activate(context: vscode.ExtensionContext) {
             openAiApiKey = value;
         }
     });
+
+    const secretStorage = context.secrets;
+
+    const secretChangeListener = secretStorage.onDidChange(async (e: vscode.SecretStorageChangeEvent) => {
+        if (e.key === 'chatide.apiKey') {
+            const key = await context.secrets.get('chatide.apiKey');
+            if (!key) {
+                return;
+            }   
+            openAiApiKey = key;
+            const forceReinit = true;
+            initGptIfNeeded(forceReinit);
+        }
+    });
   
+    context.subscriptions.push(secretChangeListener);
+
     let disposable = vscode.commands.registerCommand('chatide.start', async () => {
         const chatIdePanel = vscode.window.createWebviewPanel(
             'chatIde',
             'ChatIDE',
             vscode.ViewColumn.Beside,
             {
-                // allow the extension to reach chatide.js
+                // allow the extension to reach files in the bundle
                 localResourceRoots: [vscode.Uri.file(path.join(__dirname, '..'))],
                 enableScripts: true,
                 // Retain the context when the webview becomes hidden
@@ -55,10 +72,13 @@ export function activate(context: vscode.ExtensionContext) {
         let cssUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "chatide.css")));
         const cssPath = chatIdePanel.webview.asWebviewUri(cssUri).toString();
 
+        let iconUri = vscode.Uri.file(context.asAbsolutePath(path.join('assets', "icon.jpg")));
+        const iconPath = chatIdePanel.webview.asWebviewUri(iconUri).toString();
+
         const model = vscode.workspace.getConfiguration('chatide').get('model') || "No model configured";
 
         const configDetails = `Model: ${model.toString()}`;
-        chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString(), configDetails);
+        chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString(), iconPath.toString(), configDetails);
         chatIdePanel.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
@@ -73,6 +93,14 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 case "exportChat":
                     await exportChat();
+                    return;
+                case "importChat":
+                    const success = await importChat();
+                    if (success) {
+                        chatIdePanel.webview.postMessage({ command: "loadChatComplete", messages });
+                    } else {
+                        console.error("Failed to import chat");
+                    }
                     return;
                 }
             },
@@ -96,7 +124,7 @@ function openSettings() {
     vscode.commands.executeCommand('workbench.action.openSettings', 'chatide');
 }
 
-function getWebviewContent(chatideJsPath: string, chatideCssPath: string, configDetails: string) {
+function getWebviewContent(chatideJsPath: string, chatideCssPath: string, iconPath: string, configDetails: string) {
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -109,10 +137,14 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string, config
     <body>
         <div id="chat-container">
             <div id="chat-header">
-              <div id="chat-control">
+              <div id="logo-container">
+                <img id="chat-logo" src="${iconPath}">
                 <h1 id="chat-title">ChatIDE</h1>
-                <button id="reset-button" class="control-btn">Reset Chat</button>
+              </div>
+              <div id="chat-control">
+                <button id="reset-button" class="control-btn">Reset</button>
                 <button id="export-button" class="control-btn">Export Messages</button>
+                <button id="import-button" class="control-btn">Load Chat History</button>
               </div>
               <p id="config-details">${configDetails}</p>
             </div>
@@ -129,6 +161,7 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string, config
 }
 
 function resetChat() {
+    // Load the sytem prompt and clear the chat history.
     let systemPrompt: any = vscode.workspace.getConfiguration('chatide').get('systemPrompt');
     if (!systemPrompt) {
         vscode.window.showErrorMessage('No system prompt found in the ChatIDE settings. Please add your system prompt using the "Open ChatIDE Settings" command and restart the extension.');
@@ -239,16 +272,61 @@ async function exportChat() {
     }
 }
 
-async function initGptIfNeeded() {
-    if (openai !== undefined) {
-        return;
+// Import chat history from a JSON file
+async function importChat() {
+    const options: vscode.OpenDialogOptions = {
+        canSelectMany: false,
+        filters: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'Chat History': ['json']
+        }
+    };
+
+    const fileUri = await vscode.window.showOpenDialog(options);
+    if (fileUri && fileUri[0]) {
+        try {
+            const data = await fs.promises.readFile(fileUri[0].fsPath, 'utf8');
+            const importedMessages = JSON.parse(data);
+
+            // Assistant messages are expected to be in Markdown
+            messages = importedMessages.map((message: any) => {
+                if (message.role === 'assistant') {
+                    return {
+                        "role": message.role,
+                        "content": marked.marked(message.content)
+                    };
+                } else {
+                    return message;
+                }
+            });
+            vscode.window.showInformationMessage('Messages imported successfully!');
+            return true;
+        } catch (e: any) {
+            if (e.code === 'ENOENT') {
+                vscode.window.showErrorMessage('Failed to import messages: ' + e.message);
+            } else {
+                vscode.window.showErrorMessage('Failed to parse JSON: ' + e.message);
+            }
+        }
     }
 
+    return false;
+}
+
+async function initGptIfNeeded(force: boolean = false) {
+    // If the API is already initialized, don't do anything
+    // unless we're forcing a re-initialization.
+    if (openai !== undefined && !force) {
+        return;
+    }
+    
+    // We should have the API key at this stage.
     if (!openAiApiKey) {
         vscode.window.showErrorMessage('No API key found in the secret storage. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
         return;
     }
   
+    console.log("Initializating OpenAI API");
     const configuration = new Configuration({
         apiKey: openAiApiKey,
     });
@@ -264,11 +342,13 @@ async function promptForApiKey(context: vscode.ExtensionContext) {
 
     if (apiKey) {
         await context.secrets.store('chatide.apiKey', apiKey);
-        vscode.window.showInformationMessage('API key stored successfully. Restart the extension to apply changes.');
+        vscode.window.showInformationMessage('API key stored successfully.');
     } else {
         vscode.window.showErrorMessage('No API key entered. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
     }
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    console.log("deactivate chatide");
+}
