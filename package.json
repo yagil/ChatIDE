@@ -3,7 +3,7 @@
   "publisher": "ChatIDE",
   "displayName": "ChatIDE: GPT/ChatGPT in VSCode (Open Source)",
   "description": "Bring up ChatGPT with 'cmd + shift + i' ",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
@@ -15,6 +15,24 @@
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "chatgpt",
+    "gpt",
+    "gpt4",
+    "gpt3",
+    "openai",
+    "ai",
+    "agi",
+    "artificial-intelligence",
+    "natural-language-processing",
+    "nlp",
+    "language-model",
+    "coding-assistant",
+    "programming-help",
+    "debugging",
+    "questions",
+    "code-generation"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",

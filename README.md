@@ -9,7 +9,7 @@
 
 
 ### Demo (sped up 4x)
-https://user-images.githubusercontent.com/3611042/230437890-2b9870b8-1bfb-404a-abe4-8457b782e709.mp4
+[![Demo video](https://chatide.dev/assets/example.png)](https://user-images.githubusercontent.com/3611042/230437890-2b9870b8-1bfb-404a-abe4-8457b782e709.mp4)
 
 ## Installation
 
