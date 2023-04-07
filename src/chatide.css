@@ -48,7 +48,8 @@ h1#chat-title {
 
 .user-message,
 .assistant-message,
-.system-message {
+.system-message,
+.extension-message {
   margin-bottom: 8px;
   padding: 8px;
   word-wrap: break-word; /* break words if necessary */
@@ -92,6 +93,12 @@ h1#chat-title {
 .system-message {
   background-color: #332d45;
   color: rgb(178, 120, 241);
+  margin-bottom: 20px !important;
+}
+
+.extension-message {
+  background-color: #332d45;
+  color: rgb(241, 120, 120);
   margin-bottom: 20px !important;
 }
 
@@ -139,4 +146,8 @@ h1#chat-title {
   display: flex;
   align-items: center;
   flex-direction: row;
+}
+
+b {
+  font-weight: medium;
 }

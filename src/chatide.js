@@ -39,8 +39,11 @@ document.addEventListener("DOMContentLoaded", () => {
         case "loadChatComplete":
             message.messages.forEach((message) => {
                 addMessage(message.role, message.content);
-            }
-            );
+            });
+            break;
+        case "openAiError":
+            addMessage("extension", message.error);
+            break;
         }
     });
 
@@ -55,6 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
             break;
         case "system":
             className = "system-message";
+            break;
+        case "extension":
+            className = "extension-message";
             break;
         default:
             throw new Error(`Unknown role: ${role}`);

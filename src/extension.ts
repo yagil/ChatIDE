@@ -77,13 +77,34 @@ export function activate(context: vscode.ExtensionContext) {
 
         const model = vscode.workspace.getConfiguration('chatide').get('model') || "No model configured";
 
+        const errorCallback = (error: any) => {
+            console.error('Error fetching stream:', error);
+            const errorMessage = error.message;
+            const humanRedableError = `
+            <b>You're hitting an OpenAI API error.</b><br><br>
+            <b>Error message</b>: <i>'${errorMessage}'</i>.<br><br>
+            <u>Common reasons for OpenAI Errors</u>:<br><br>
+            \t • <b>OpenAI might be having issues</b>: check the <a href="https://status.openai.com/">OpenAI system status page</a>.<br>
+            \t • <b>Invalid API Key</b>: make sure you entered it correctly (Need help? See <a href="https://github.com/yagil/ChatIDE#configuration">Setting your OpenAI API key</a>).<br>
+            \t • <b>Exceeded quota</b>: make sure your OpenAI billing is setup correctly.<br>
+            \t • <b>Invalid Model name</b>: make sure you chose a supported model.<br>
+            \t • <b>Model not compatible with your API Key</b>: you might not have access to one of the newer models.<br>
+            \t • <b>Chat history too long</b>: ChatGPT has a limited context window. Export your current history to file and start a new chat.<br>
+            <br>
+            Double check your configuration and restart VS Code to try again.<br><br>
+            If the issue persists, please <a href="https://github.com/yagil/chatIDE/issues">open an issue on GitHub</a> or contact us on <a href="https://twitter.com/aichatide">Twitter</a>.
+            `;
+
+            chatIdePanel.webview.postMessage({ command: "openAiError", error: humanRedableError });
+        };
+        
         const configDetails = `Model: ${model.toString()}`;
         chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString(), iconPath.toString(), configDetails);
         chatIdePanel.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
                 case "getGptResponse":
-                    for await (const token of getGptResponse(message.userMessage)) {
+                    for await (const token of getGptResponse(message.userMessage, errorCallback)) {
                         chatIdePanel.webview.postMessage({ command: "gptResponse", token });
                     }
                     return;
@@ -172,7 +193,7 @@ function resetChat() {
     messages.push({"role": "system", "content": systemPrompt.toString()});
 }
 
-async function* getGptResponse(userMessage: string) {
+async function* getGptResponse(userMessage: string, errorCallback?: (error: any) => void) {
     initGptIfNeeded();
 
     messages.push({"role": "user", "content": userMessage});
@@ -209,15 +230,17 @@ async function* getGptResponse(userMessage: string) {
             stream: true,
         }, { responseType: 'stream' });
 
-        for await (const token of streamToTokens(res)) {
+        for await (const token of streamToTokens(res, errorCallback)) {
             yield token;
         }
     } catch (error: any) {
-        console.error('Error fetching stream:', error);
+        if (errorCallback) {
+            errorCallback(error);
+        }
     }
 }
 
-async function* streamToTokens(stream: any) {
+async function* streamToTokens(stream: any, errorCallback?: (error: any) => void) {
     let buffer = '';
     let gptMessage = '';
 
@@ -245,8 +268,10 @@ async function* streamToTokens(stream: any) {
                 }
             }
         }
-    } catch (error) {
-        console.error("Error in streamToTokens:", error);
+    } catch (error: any) {
+        if (errorCallback) {
+            errorCallback(error);
+        }
     }
 }
 
