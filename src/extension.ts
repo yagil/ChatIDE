@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
             'ChatIDE',
             vscode.ViewColumn.Beside,
             {
-                // allow the extension to reach chatide.js
+                // allow the extension to reach files in the bundle
                 localResourceRoots: [vscode.Uri.file(path.join(__dirname, '..'))],
                 enableScripts: true,
                 // Retain the context when the webview becomes hidden
@@ -55,10 +55,13 @@ export function activate(context: vscode.ExtensionContext) {
         let cssUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "chatide.css")));
         const cssPath = chatIdePanel.webview.asWebviewUri(cssUri).toString();
 
+        let iconUri = vscode.Uri.file(context.asAbsolutePath(path.join('assets', "icon.jpg")));
+        const iconPath = chatIdePanel.webview.asWebviewUri(iconUri).toString();
+
         const model = vscode.workspace.getConfiguration('chatide').get('model') || "No model configured";
 
         const configDetails = `Model: ${model.toString()}`;
-        chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString(), configDetails);
+        chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString(), iconPath.toString(), configDetails);
         chatIdePanel.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
@@ -73,6 +76,14 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 case "exportChat":
                     await exportChat();
+                    return;
+                case "importChat":
+                    const success = await importChat();
+                    if (success) {
+                        chatIdePanel.webview.postMessage({ command: "loadChatComplete", messages });
+                    } else {
+                        console.error("Failed to import chat");
+                    }
                     return;
                 }
             },
@@ -96,7 +107,7 @@ function openSettings() {
     vscode.commands.executeCommand('workbench.action.openSettings', 'chatide');
 }
 
-function getWebviewContent(chatideJsPath: string, chatideCssPath: string, configDetails: string) {
+function getWebviewContent(chatideJsPath: string, chatideCssPath: string, iconPath: string, configDetails: string) {
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -109,10 +120,14 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string, config
     <body>
         <div id="chat-container">
             <div id="chat-header">
-              <div id="chat-control">
+              <div id="logo-container">
+                <img id="chat-logo" src="${iconPath}">
                 <h1 id="chat-title">ChatIDE</h1>
-                <button id="reset-button" class="control-btn">Reset Chat</button>
+              </div>
+              <div id="chat-control">
+                <button id="reset-button" class="control-btn">Reset</button>
                 <button id="export-button" class="control-btn">Export Messages</button>
+                <button id="import-button" class="control-btn">Load Chat History</button>
               </div>
               <p id="config-details">${configDetails}</p>
             </div>
@@ -238,6 +253,48 @@ async function exportChat() {
         });
     }
 }
+
+// Import chat history from a JSON file
+async function importChat() {
+    const options: vscode.OpenDialogOptions = {
+        canSelectMany: false,
+        filters: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            'JSON': ['json']
+        }
+    };
+
+    const fileUri = await vscode.window.showOpenDialog(options);
+    if (fileUri && fileUri[0]) {
+        try {
+            const data = await fs.promises.readFile(fileUri[0].fsPath, 'utf8');
+            const importedMessages = JSON.parse(data);
+
+            // Assistant messages are expected to be in Markdown
+            messages = importedMessages.map((message: any) => {
+                if (message.role === 'assistant') {
+                    return {
+                        "role": message.role,
+                        "content": marked.marked(message.content)
+                    };
+                } else {
+                    return message;
+                }
+            });
+            vscode.window.showInformationMessage('Messages imported successfully!');
+            return true;
+        } catch (e: any) {
+            if (e.code === 'ENOENT') {
+                vscode.window.showErrorMessage('Failed to import messages: ' + e.message);
+            } else {
+                vscode.window.showErrorMessage('Failed to parse JSON: ' + e.message);
+            }
+        }
+    }
+
+    return false;
+}
+
 
 async function initGptIfNeeded() {
     if (openai !== undefined) {
