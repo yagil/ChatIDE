@@ -14,7 +14,8 @@ let messages: ChatCompletionRequestMessage[] = [];
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  
+    console.log("activate chatide");
+      
     resetChat();
 
     context.subscriptions.push(
@@ -34,7 +35,23 @@ export function activate(context: vscode.ExtensionContext) {
             openAiApiKey = value;
         }
     });
+
+    const secretStorage = context.secrets;
+
+    const secretChangeListener = secretStorage.onDidChange(async (e: vscode.SecretStorageChangeEvent) => {
+        if (e.key === 'chatide.apiKey') {
+            const key = await context.secrets.get('chatide.apiKey');
+            if (!key) {
+                return;
+            }   
+            openAiApiKey = key;
+            const forceReinit = true;
+            initGptIfNeeded(forceReinit);
+        }
+    });
   
+    context.subscriptions.push(secretChangeListener);
+
     let disposable = vscode.commands.registerCommand('chatide.start', async () => {
         const chatIdePanel = vscode.window.createWebviewPanel(
             'chatIde',
@@ -144,6 +161,7 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string, iconPa
 }
 
 function resetChat() {
+    // Load the sytem prompt and clear the chat history.
     let systemPrompt: any = vscode.workspace.getConfiguration('chatide').get('systemPrompt');
     if (!systemPrompt) {
         vscode.window.showErrorMessage('No system prompt found in the ChatIDE settings. Please add your system prompt using the "Open ChatIDE Settings" command and restart the extension.');
@@ -260,7 +278,7 @@ async function importChat() {
         canSelectMany: false,
         filters: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            'JSON': ['json']
+            'Chat History': ['json']
         }
     };
 
@@ -295,17 +313,20 @@ async function importChat() {
     return false;
 }
 
-
-async function initGptIfNeeded() {
-    if (openai !== undefined) {
+async function initGptIfNeeded(force: boolean = false) {
+    // If the API is already initialized, don't do anything
+    // unless we're forcing a re-initialization.
+    if (openai !== undefined && !force) {
         return;
     }
-
+    
+    // We should have the API key at this stage.
     if (!openAiApiKey) {
         vscode.window.showErrorMessage('No API key found in the secret storage. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
         return;
     }
   
+    console.log("Initializating OpenAI API");
     const configuration = new Configuration({
         apiKey: openAiApiKey,
     });
@@ -321,11 +342,13 @@ async function promptForApiKey(context: vscode.ExtensionContext) {
 
     if (apiKey) {
         await context.secrets.store('chatide.apiKey', apiKey);
-        vscode.window.showInformationMessage('API key stored successfully. Restart the extension to apply changes.');
+        vscode.window.showInformationMessage('API key stored successfully.');
     } else {
         vscode.window.showErrorMessage('No API key entered. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
     }
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    console.log("deactivate chatide");
+}

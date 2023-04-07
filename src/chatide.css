@@ -90,8 +90,9 @@ h1#chat-title {
 }
 
 .system-message {
-  background-color: #47003e;
-  color: white;
+  background-color: #332d45;
+  color: rgb(178, 120, 241);
+  margin-bottom: 20px !important;
 }
 
 #message-input {
