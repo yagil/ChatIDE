@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### Demo (sped up 4x)
-[![Demo video]()](https://user-images.githubusercontent.com/3611042/230437890-2b9870b8-1bfb-404a-abe4-8457b782e709.mp4)
+https://user-images.githubusercontent.com/3611042/230437890-2b9870b8-1bfb-404a-abe4-8457b782e709.mp4
 
 ## Installation
 
