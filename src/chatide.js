@@ -30,6 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("message", (event) => {
         const message = event.data;
         switch (message.command) {
+        case "sentUserMessage":
+            addMessage("user", message.userMessageMarkdown);
+            break;
         case "gptResponse":
             addMessage("assistant", message.token, true);
             break;
@@ -79,13 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
             messageElement.className = className;
         }
 
-        if (role === "user") {
-            // The user's message is plain text.
-            messageElement.textContent = content;
-        } else {
-            // The assistant's message is HTML (Markdown).
-            messageElement.innerHTML = content;
-        }
+        messageElement.innerHTML = content;
 
         messagesContainer.insertAdjacentElement("beforeend", messageElement);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -101,16 +98,25 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
       
-        addMessage("user", userMessage, false);
-
         vscode.postMessage(
             {
                 command: "getGptResponse",
-                userMessage,
+                userMessage: escapeHtml(userMessage),
             }
         );
     }
 });
+
+// The user's message might contain HTML, but it's 
+// also unlikely the user wants that HTML to render.
+function escapeHtml(html) {
+    return html
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
 function autoResize(textarea) {
     textarea.style.height = 'auto';

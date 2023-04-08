@@ -2,7 +2,47 @@
 
 All notable changes to the "ChatIDE" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [0.0.9]
+
+### Added
+- Render the user message as markdown
+
+## [0.0.8]
+
+### Changed
+- Change default model to gpt-3.5-turbo because most people don't have access to 4 yet
+
+### Added
+- Show OpenAI API error in the chat with some troubleshooting options
+
+## [0.0.7]
+
+### Added
+- Load and continue a conversation from JSON file
+- Styling updates
+
+## [0.0.6]
+
+### Fixed
+- Fix a bug where the api key won't be registered until the user restarted VS Code
+
+## [0.0.5]
+
+### Added
+- Add code to publish the extension to Microsoft's extension marketplace
+
+## [0.0.4]
+
+### Added
+- Store API key in VS Code secretStorage
+- System prompt asks GPT to avoid repeating information
+
+## [0.0.3]
+
+### Added
+- Ability to configure system prompt through extension settings
+- Ability to reset chat
+- Ability to export current chat as JSON
 
 ## [Unreleased]
 

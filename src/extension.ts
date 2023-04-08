@@ -104,6 +104,11 @@ export function activate(context: vscode.ExtensionContext) {
             async (message) => {
                 switch (message.command) {
                 case "getGptResponse":
+                    // Turn the user's message to Markdown and echo it back
+                    const userMessageMarkdown = marked.marked(message.userMessage);
+                    chatIdePanel.webview.postMessage({ command: "sentUserMessage", userMessageMarkdown });
+                    
+                    // Proceed to query OpenAI API and stream back the generated tokens.
                     for await (const token of getGptResponse(message.userMessage, errorCallback)) {
                         chatIdePanel.webview.postMessage({ command: "gptResponse", token });
                     }
