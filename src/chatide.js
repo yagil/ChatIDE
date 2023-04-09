@@ -107,15 +107,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// The user's message might contain HTML, but it's 
-// also unlikely the user wants that HTML to render.
 function escapeHtml(html) {
-    return html
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    let inCodeBlock = false;
+    let escapedHtml = '';
+    const codeBlockRegex = /(```|`)/g;
+    const htmlEntities = [
+        { regex: /&/g, replacement: '&amp;' },
+        { regex: /</g, replacement: '&lt;' },
+        { regex: />/g, replacement: '&gt;' },
+        { regex: /"/g, replacement: '&quot;' },
+        { regex: /'/g, replacement: '&#039;' },
+    ];
+  
+    html.split(codeBlockRegex).forEach((segment, index) => {
+        // If the index is even, it's not a code block.
+        // If the index is odd, it's a code block.
+        if (index % 2 === 0) {
+            if (!inCodeBlock) {
+                htmlEntities.forEach(({ regex, replacement }) => {
+                    segment = segment.replace(regex, replacement);
+                });
+            }
+        } else {
+            inCodeBlock = !inCodeBlock;
+        }
+        escapedHtml += segment;
+    });
+  
+    return escapedHtml;
 }
 
 function autoResize(textarea) {

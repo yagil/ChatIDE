@@ -318,16 +318,11 @@ async function importChat() {
             const data = await fs.promises.readFile(fileUri[0].fsPath, 'utf8');
             const importedMessages = JSON.parse(data);
 
-            // Assistant messages are expected to be in Markdown
             messages = importedMessages.map((message: any) => {
-                if (message.role === 'assistant') {
-                    return {
-                        "role": message.role,
-                        "content": marked.marked(message.content)
-                    };
-                } else {
-                    return message;
-                }
+                return {
+                    "role": message.role,
+                    "content": marked.marked(message.content)
+                };
             });
             vscode.window.showInformationMessage('Messages imported successfully!');
             return true;
