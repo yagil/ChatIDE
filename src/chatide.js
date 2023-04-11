@@ -30,6 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    document.getElementById('show-code').addEventListener('click', () => {
+        vscode.postMessage({ command: 'navigateToHighlightedCode' });
+    });    
+
     window.addEventListener("message", (event) => {
         const message = event.data;
         switch (message.command) {
@@ -49,6 +53,16 @@ document.addEventListener("DOMContentLoaded", () => {
             break;
         case "openAiError":
             addMessage("extension", message.error);
+            break;
+        case 'updateHighlightedCodeStatus':
+            document.getElementById('highlighted-code-status').textContent = message.status;
+            if (message.showButton) {
+                document.getElementById('show-code').style.display = 'inline';
+                document.getElementById('highlighted-code-status').classList.add('white-text');
+            } else {
+                document.getElementById('show-code').style.display = 'none';
+                document.getElementById('highlighted-code-status').classList.remove('white-text');
+            }
             break;
         }
     });
@@ -87,6 +101,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
         messageElement.innerHTML = content;
 
+        const codeBlocks = messageElement.querySelectorAll('pre code');
+        codeBlocks.forEach((codeBlock) => {
+            const preElement = codeBlock.parentNode;
+            if (preElement.tagName === 'PRE') {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-block-wrapper';
+                preElement.parentNode.insertBefore(wrapper, preElement);
+                if (role === 'assistant') {
+                    const button = createCopyCodeButton(codeBlock);
+                    wrapper.appendChild(button);
+                }
+                wrapper.appendChild(preElement);
+            }
+        });
+        highlightCodeBlocks(messageElement);
+        
         messagesContainer.insertAdjacentElement("beforeend", messageElement);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -140,6 +170,7 @@ function escapeHtml(html) {
     return escapedHtml;
 }
 
+
 function autoResize(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
@@ -155,5 +186,27 @@ function handleTabInTextarea(textarea) {
             textarea.selectionStart = textarea.selectionEnd = start + 1;
         }
     });
+}
+
+function highlightCodeBlocks(element) {
+    const codeBlocks = element.querySelectorAll('pre code');
+    codeBlocks.forEach((codeBlock) => {
+        hljs.highlightBlock(codeBlock);
+    });
+}
+
+function createCopyCodeButton(codeBlock) {
+    const button = document.createElement('button');
+    button.textContent = 'Copy code';
+    button.className = 'copy-code-button';
+    button.addEventListener('click', () => {
+        navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = 'Copy code';
+            }, 2000);
+        });
+    });
+    return button;
 }
   
