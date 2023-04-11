@@ -7,9 +7,22 @@ import * as fs from 'fs';
 
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 
+interface ResourcePaths {
+    chatideJsPath: string;
+    chatideCssPath: string;
+    iconPath: string;
+    highlightJsCssPath: string;
+    highlightJsScriptPath: string;
+}
+
+const NO_CODE_HIGHLIGHTED_COPY = "No code is highlighted. Highlight code to include it in the message to ChatGPT.";
+
 let openai: OpenAIApi;
 let openAiApiKey: string;
 let messages: ChatCompletionRequestMessage[] = [];
+
+let selectedCode: string;
+let selectedCodeSentToGpt: string;
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -37,7 +50,6 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     const secretStorage = context.secrets;
-
     const secretChangeListener = secretStorage.onDidChange(async (e: vscode.SecretStorageChangeEvent) => {
         if (e.key === 'chatide.apiKey') {
             const key = await context.secrets.get('chatide.apiKey');
@@ -72,6 +84,12 @@ export function activate(context: vscode.ExtensionContext) {
         let cssUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "chatide.css")));
         const cssPath = chatIdePanel.webview.asWebviewUri(cssUri).toString();
 
+        let highlightJsCssUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "atom-one-dark.min.css")));
+        const highlightJsCssPath = chatIdePanel.webview.asWebviewUri(highlightJsCssUri).toString();
+
+        let highlightJsScriptUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "highlight.min.js")));
+        const highlightJsScriptPath = chatIdePanel.webview.asWebviewUri(highlightJsScriptUri).toString();
+
         let iconUri = vscode.Uri.file(context.asAbsolutePath(path.join('assets', "icon.jpg")));
         const iconPath = chatIdePanel.webview.asWebviewUri(iconUri).toString();
 
@@ -99,7 +117,16 @@ export function activate(context: vscode.ExtensionContext) {
         };
         
         const configDetails = `Model: ${model.toString()}`;
-        chatIdePanel.webview.html = getWebviewContent(jsPath.toString(), cssPath.toString(), iconPath.toString(), configDetails);
+        const resourcePaths = {
+            chatideJsPath: jsPath.toString(),
+            chatideCssPath: cssPath.toString(),
+            iconPath: iconPath.toString(),
+            highlightJsCssPath: highlightJsCssPath,
+            highlightJsScriptPath: highlightJsScriptPath,
+        }
+
+        chatIdePanel.webview.html = getWebviewContent(resourcePaths, configDetails);
+
         chatIdePanel.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
@@ -128,12 +155,20 @@ export function activate(context: vscode.ExtensionContext) {
                         console.error("Failed to import chat");
                     }
                     return;
+                case 'navigateToHighlightedCode':
+                    navigateToHighlightedCode();
+                    return;
                 }
             },
             null,
             context.subscriptions
         );
 
+        // Add an event listener for selection changes
+        context.subscriptions.push(
+            vscode.window.onDidChangeTextEditorSelection((event) => handleSelectionChange(event, chatIdePanel))
+        );
+        
         chatIdePanel.onDidDispose(
             () => {
                 console.log('WebView closed');
@@ -150,7 +185,9 @@ function openSettings() {
     vscode.commands.executeCommand('workbench.action.openSettings', 'chatide');
 }
 
-function getWebviewContent(chatideJsPath: string, chatideCssPath: string, iconPath: string, configDetails: string) {
+function getWebviewContent(
+    paths: ResourcePaths,
+    modelConfigDetails: string) {
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -158,13 +195,13 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string, iconPa
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>ChatIDE</title>
-        <link rel="stylesheet" href="${chatideCssPath}">
+        <link rel="stylesheet" href="${paths.chatideCssPath}">
     </head>
     <body>
         <div id="chat-container">
             <div id="chat-header">
               <div id="logo-container">
-                <img id="chat-logo" src="${iconPath}">
+                <img id="chat-logo" src="${paths.iconPath}">
                 <h1 id="chat-title">ChatIDE</h1>
               </div>
               <div id="chat-control">
@@ -172,15 +209,21 @@ function getWebviewContent(chatideJsPath: string, chatideCssPath: string, iconPa
                 <button id="export-button" class="control-btn">Export Messages</button>
                 <button id="import-button" class="control-btn">Load Chat History</button>
               </div>
-              <p id="config-details">${configDetails}</p>
+              <p id="config-details">${modelConfigDetails}</p>
             </div>
             <div id="messages"></div>
             <div class="chat-bar">
               <textarea id="message-input" spellcheck="true" oninput="autoResize(this)" placeholder="Type your question here..."></textarea>
               <button id="send-button">Send</button>
             </div>
+            <div id="status-bar">
+              <span id="highlighted-code-status">${NO_CODE_HIGHLIGHTED_COPY}</span>
+              <button id="show-code" style="display:none;">Show code</button>
+            </div>
         </div>
-        <script src="${chatideJsPath}"></script>
+        <link rel="stylesheet" href="${paths.highlightJsCssPath}">
+        <script src="${paths.highlightJsScriptPath}"></script>
+        <script src="${paths.chatideJsPath}"></script>
      </body>
   </html>
   `;
@@ -200,6 +243,14 @@ function resetChat() {
 
 async function* getGptResponse(userMessage: string, errorCallback?: (error: any) => void) {
     initGptIfNeeded();
+
+    if (selectedCodeSentToGpt !== selectedCode) {
+        console.log("Including highlighted text in GPT request")
+        userMessage = `${prepareSelectedCodeContext()} ${userMessage}`;
+        selectedCodeSentToGpt = selectedCode;
+    } else {
+        console.log("Not including highlighted text in GPT request because it's already been sent");
+    }
 
     messages.push({"role": "user", "content": userMessage});
 
@@ -371,6 +422,53 @@ async function promptForApiKey(context: vscode.ExtensionContext) {
     } else {
         vscode.window.showErrorMessage('No API key entered. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
     }
+}
+
+function navigateToHighlightedCode() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+
+    const selection = editor.selection;
+    if (!selection.isEmpty) {
+        editor.revealRange(selection, vscode.TextEditorRevealType.Default);
+    }
+}
+
+function getTokenEstimateString(numCharacters: number): string {
+    const estimate = Math.round(numCharacters / 4);
+    if (estimate === 1) {
+        return `~${estimate} token`;
+    }
+    return `~${estimate} tokens`;
+}
+
+function handleSelectionChange(event: vscode.TextEditorSelectionChangeEvent, chatIdePanel: vscode.WebviewPanel) {
+    selectedCode = event.textEditor.document.getText(event.selections[0]);
+    if (selectedCode) {
+        const numCharacters = selectedCode.length;
+        chatIdePanel.webview.postMessage({
+            command: 'updateHighlightedCodeStatus',
+            status: `${numCharacters} characters (${getTokenEstimateString(numCharacters)}) are highlighted. This code will be included in your message to GPT.`,
+            showButton: true
+        });
+    } else {
+        chatIdePanel.webview.postMessage({
+            command: 'updateHighlightedCodeStatus',
+            status: NO_CODE_HIGHLIGHTED_COPY,
+            showButton: false
+        });
+    }
+}
+
+function prepareSelectedCodeContext() {
+    return `
+    CONTEXT:
+    =========================
+    In my question I am referring to the following code:
+    ${selectedCode}
+    =========================\n`;
 }
 
 // This method is called when your extension is deactivated

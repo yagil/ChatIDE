@@ -3,7 +3,7 @@
   "publisher": "ChatIDE",
   "displayName": "ChatIDE: GPT/ChatGPT in VSCode (Open Source)",
   "description": "Bring up ChatGPT with 'cmd + shift + i' ",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
@@ -127,6 +127,7 @@
   },
   "dependencies": {
     "dotenv": "^16.0.3",
+    "highlight.js": "^11.7.0",
     "marked": "^4.3.0",
     "openai": "^3.2.1"
   }

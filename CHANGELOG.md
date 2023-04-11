@@ -2,6 +2,14 @@
 
 All notable changes to the "ChatIDE" extension will be documented in this file.
 
+## [0.1.0]
+
+### Added
+- Use highlight.js to highlight code blocks
+- "copy code" button to easily copy code produced by the assistant
+- Highlighting code automatically includes it in a special "context" prefix message to the assistant (this happens only once per code selection)
+- Pressing tab in the textrea now inserts a tab into the text instead of changing focus target
+
 ## [0.0.9]
 
 ### Added
