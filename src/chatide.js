@@ -5,7 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
   
     document.getElementById("send-button").addEventListener("click", sendMessage);
 
-    document.getElementById('message-input').addEventListener('input', function() {
+    const messageInputTextArea = document.getElementById('message-input');
+    handleTabInTextarea(messageInputTextArea);
+    
+    messageInputTextArea.addEventListener('input', function() {
         autoResize(this);
     });
 
@@ -141,3 +144,16 @@ function autoResize(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
+
+function handleTabInTextarea(textarea) {
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            textarea.value = textarea.value.substring(0, start) + '\t' + textarea.value.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + 1;
+        }
+    });
+}
+  
