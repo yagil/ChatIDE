@@ -15,7 +15,11 @@ interface ResourcePaths {
     highlightJsScriptPath: string;
 }
 
-const NO_CODE_HIGHLIGHTED_COPY = "No code is highlighted. Highlight code to include it in the message to ChatGPT.";
+const isMac = process.platform === "darwin";
+
+const OS_LOCALIZED_KEY_CHORD = isMac ? "Cmd+Shift+P" : "Ctrl+Shift+P";
+const NO_SELECTION_COPY = "No code is highlighted. Highlight code to include it in the message to ChatGPT.";
+const SELECTION_AWARENESS_OFF_COPY = `Code selection awareness is turned off. To turn it on, go to settings (${OS_LOCALIZED_KEY_CHORD}).`;
 
 let openai: OpenAIApi;
 let openAiApiKey: string;
@@ -23,6 +27,8 @@ let messages: ChatCompletionRequestMessage[] = [];
 
 let selectedCode: string;
 let selectedCodeSentToGpt: string;
+
+let highlightedCodeAwareness: boolean = vscode.workspace.getConfiguration('chatide').get('highlightedCodeAwareness') || false;
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -123,7 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
             iconPath: iconPath.toString(),
             highlightJsCssPath: highlightJsCssPath,
             highlightJsScriptPath: highlightJsScriptPath,
-        }
+        };
 
         chatIdePanel.webview.html = getWebviewContent(resourcePaths, configDetails);
 
@@ -158,6 +164,14 @@ export function activate(context: vscode.ExtensionContext) {
                 case 'navigateToHighlightedCode':
                     navigateToHighlightedCode();
                     return;
+                case 'insertCode': // used for drag and drop
+                    const activeEditor = vscode.window.activeTextEditor;
+                    if (activeEditor) {
+                        const position = activeEditor.selection.active;
+                        activeEditor.edit((editBuilder) => {
+                            editBuilder.insert(position, message.code);
+                        });
+                    }
                 }
             },
             null,
@@ -168,6 +182,21 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
             vscode.window.onDidChangeTextEditorSelection((event) => handleSelectionChange(event, chatIdePanel))
         );
+
+        // listen for changes in highlightedCodeAwareness
+        vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
+            if (e.affectsConfiguration('chatide.highlightedCodeAwareness')) {
+                highlightedCodeAwareness = vscode.workspace.getConfiguration('chatide').get('highlightedCodeAwareness') || false;
+                
+                // This is imperfect because if there's code selected while the setting is changed
+                // the status copy will be 'wrong'. 
+                chatIdePanel.webview.postMessage({
+                    command: 'updateHighlightedCodeStatus',
+                    status: !highlightedCodeAwareness ? SELECTION_AWARENESS_OFF_COPY : NO_SELECTION_COPY,
+                    showButton: false
+                });
+            }
+        });
         
         chatIdePanel.onDidDispose(
             () => {
@@ -188,6 +217,7 @@ function openSettings() {
 function getWebviewContent(
     paths: ResourcePaths,
     modelConfigDetails: string) {
+    const codeHighlightStatusCopy = !highlightedCodeAwareness ? SELECTION_AWARENESS_OFF_COPY : NO_SELECTION_COPY;
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -217,7 +247,7 @@ function getWebviewContent(
               <button id="send-button">Send</button>
             </div>
             <div id="status-bar">
-              <span id="highlighted-code-status">${NO_CODE_HIGHLIGHTED_COPY}</span>
+              <span id="highlighted-code-status">${codeHighlightStatusCopy}</span>
               <button id="show-code" style="display:none;">Show code</button>
             </div>
         </div>
@@ -244,8 +274,8 @@ function resetChat() {
 async function* getGptResponse(userMessage: string, errorCallback?: (error: any) => void) {
     initGptIfNeeded();
 
-    if (selectedCodeSentToGpt !== selectedCode) {
-        console.log("Including highlighted text in GPT request")
+    if (highlightedCodeAwareness && selectedCodeSentToGpt !== selectedCode) {
+        console.log("Including highlighted text in GPT request.");
         userMessage = `${prepareSelectedCodeContext()} ${userMessage}`;
         selectedCodeSentToGpt = selectedCode;
     } else {
@@ -446,21 +476,28 @@ function getTokenEstimateString(numCharacters: number): string {
 
 function handleSelectionChange(event: vscode.TextEditorSelectionChangeEvent, chatIdePanel: vscode.WebviewPanel) {
     selectedCode = event.textEditor.document.getText(event.selections[0]);
-    if (selectedCode) {
+    if (selectedCode && highlightedCodeAwareness) {
         const numCharacters = selectedCode.length;
         chatIdePanel.webview.postMessage({
             command: 'updateHighlightedCodeStatus',
             status: `${numCharacters} characters (${getTokenEstimateString(numCharacters)}) are highlighted. This code will be included in your message to GPT.`,
             showButton: true
         });
+    } else if (!highlightedCodeAwareness) {
+        chatIdePanel.webview.postMessage({
+            command: 'updateHighlightedCodeStatus',
+            status: SELECTION_AWARENESS_OFF_COPY,
+            showButton: false
+        });
     } else {
         chatIdePanel.webview.postMessage({
             command: 'updateHighlightedCodeStatus',
-            status: NO_CODE_HIGHLIGHTED_COPY,
+            status: NO_SELECTION_COPY,
             showButton: false
         });
     }
 }
+
 
 function prepareSelectedCodeContext() {
     return `
