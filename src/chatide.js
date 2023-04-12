@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         case "openAiError":
             addMessage("extension", message.error);
             break;
-        case 'updateHighlightedCodeStatus':
+        case "updateHighlightedCodeStatus":
             document.getElementById('highlighted-code-status').textContent = message.status;
             if (message.showButton) {
                 document.getElementById('show-code').style.display = 'inline';
@@ -210,3 +210,30 @@ function createCopyCodeButton(codeBlock) {
     return button;
 }
   
+function wrapCodeBlocks(messageElement, role) {
+    const codeBlocks = messageElement.querySelectorAll('pre code');
+    codeBlocks.forEach((codeBlock) => {
+        const preElement = codeBlock.parentNode;
+        if (preElement.tagName === 'PRE') {
+            const wrapper = createCodeBlockWrapper(codeBlock, role);
+            preElement.parentNode.insertBefore(wrapper, preElement);
+            wrapper.appendChild(preElement);
+        }
+    });
+}
+
+function createCodeBlockWrapper(codeBlock, role) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block-wrapper';
+    if (role === 'assistant') {
+        // Future: enable drag n drop for code blocks
+        // Must be configurable behavior (e.g. in settings)
+        wrapper.draggable = false;
+        wrapper.addEventListener('dragstart', (event) => {
+            event.dataTransfer.setData('text/plain', codeBlock.textContent);
+        });
+        const button = createCopyCodeButton(codeBlock);
+        wrapper.appendChild(button);
+    }
+    return wrapper;
+}

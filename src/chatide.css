@@ -198,14 +198,11 @@ b {
   right: 0;
   margin: 10px 10px 0 0;
   font-size: 12px;
-  padding: 3px 5px;
-  background-color: #d7ff97;
+  padding: 5px 7px;
+  background-color: #353840;
   border-radius: 5px;
-  color: rgb(0, 0, 0);
+  color: white;
   border: none;
   cursor: pointer;
   z-index: 1;
-}
-.copy-code-button:hover {
-  background-color: #a8ff37;
 }

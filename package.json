@@ -3,7 +3,7 @@
   "publisher": "ChatIDE",
   "displayName": "ChatIDE: GPT/ChatGPT in VSCode (Open Source)",
   "description": "Bring up ChatGPT with 'cmd + shift + i' ",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
@@ -89,11 +89,18 @@
         },
         "chatide.temperature": {
           "type": "number",
-          "default": 0.7,
-          "minimum": 0,
+          "default": 0,
+          "maximum": 1.0,
+          "minimum": 0.0,
           "description": "Set the temperature for controlling the randomness of the generated text.",
           "scope": "window"
-        }
+        },
+        "chatide.highlightedCodeAwareness": {
+          "type": "boolean",
+          "default": false,
+          "description": "[Experimental] Automatically include highlighted code in the prompt.",
+          "scope": "window"
+        }  
       }
     }
   },
