@@ -196,20 +196,36 @@ function highlightCodeBlocks(element) {
 }
 
 function createCopyCodeButton(codeBlock) {
+    const COPY_BUTTON_TEXT = 'Copy code';
     const button = document.createElement('button');
-    button.textContent = 'Copy code';
+
+    button.textContent = COPY_BUTTON_TEXT;
     button.className = 'copy-code-button';
     button.addEventListener('click', () => {
-        navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(codeBlock);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        try {
+            // Some users on Linux reported that `navigator.clipboard.writeText` failed
+            // Reluctantly using `document.execCommand('copy')` as a fallback
+            document.execCommand('copy');
             button.textContent = 'Copied!';
             setTimeout(() => {
-                button.textContent = 'Copy code';
+                button.textContent = COPY_BUTTON_TEXT;
             }, 2000);
-        });
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+
+        selection.removeAllRanges();
     });
     return button;
 }
-  
+
+
 function wrapCodeBlocks(messageElement, role) {
     const codeBlocks = messageElement.querySelectorAll('pre code');
     codeBlocks.forEach((codeBlock) => {
