@@ -17,6 +17,8 @@
     "Other"
   ],
   "keywords": [
+    "anthropic",
+    "claude",
     "chatgpt",
     "gpt",
     "gpt4",
@@ -47,8 +49,12 @@
         "title": "Open ChatIDE Settings"
       },
       {
-        "command": "chatide.updateApiKey",
-        "title": "Update ChatIDE OpenAI API Key"
+        "command": "chatide.updateOpenAiApiKey",
+        "title": "Update your OpenAI API Key for ChatIDE"
+      },
+      {
+        "command": "chatide.updateAnthropicApiKey",
+        "title": "Update your Anthropic API Key for ChatIDE"
       }
     ],
     "keybindings": [
@@ -61,9 +67,12 @@
     "configuration": {
       "title": "ChatIDE",
       "properties": {
-        "chatide.apiKey": {
-          "type": null,
-          "markdownDescription": "Your key is stored in VSCode's secret storage. To update your API key, run the `Update ChatIDE API Key` command from the Command Palette (cmd + shift + P).\n\n ----- \n\n **Note:** You do NOT need to edit the settings.json file.",
+        "chatide.aiProvider": {
+          "type": "string",
+          "default": "openai",
+          "enum": ["openai", "anthropic"],
+          "enumDescriptions": ["OpenAI's ChatGPT", "Anthropic's Claude"],
+          "description": "Select the AI provider for the generated text. Note that you must enter a model and API key for the selected provider.",
           "scope": "window"
         },
         "chatide.systemPrompt": {
