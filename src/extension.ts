@@ -19,6 +19,8 @@ interface ResourcePaths {
     highlightJsScriptPath: string;
 }
 
+console.log("Node.js version:", process.version);
+
 const supportedProviders = ["openai", "anthropic"];
 
 const isMac = process.platform === "darwin";
@@ -68,14 +70,14 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             // Reinitialize the API provider if the Anthropic API key changes
-            initApiProviderIfNeeded(context, forceReinit);
+            await initApiProviderIfNeeded(context, forceReinit);
         } else if (e.key === "chatide.openAiApiKey") {
             const key = await context.secrets.get("chatide.openAiApiKey");
             if (!key) {
                 return;
             }
             // Reinitialize the API provider if the OpenAI API key changes
-            initApiProviderIfNeeded(context, forceReinit);
+            await initApiProviderIfNeeded(context, forceReinit);
         }
     });
   
@@ -111,12 +113,13 @@ export function activate(context: vscode.ExtensionContext) {
         const iconPath = chatIdePanel.webview.asWebviewUri(iconUri).toString();
 
         const model = vscode.workspace.getConfiguration('chatide').get('model') || "No model configured";
+        const provider = vscode.workspace.getConfiguration('chatide').get('aiProvider') || "No provider configured";
 
         const errorCallback = (error: any) => {
             console.error('Error fetching stream:', error);
             const errorMessage = error.message;
             const humanRedableError = `
-            <b>You're hitting an OpenAI API error.</b><br><br>
+            <b>You're hitting an ${provider} API error.</b><br><br>
             <b>Error message</b>: <i>'${errorMessage}'</i>.<br><br>
             <u>Common reasons for OpenAI Errors</u>:<br><br>
             \t • <b>OpenAI might be having issues</b>: check the <a href="https://status.openai.com/">OpenAI system status page</a>.<br>
@@ -218,6 +221,10 @@ export function activate(context: vscode.ExtensionContext) {
                     status: !highlightedCodeAwareness ? SELECTION_AWARENESS_OFF_COPY : NO_SELECTION_COPY,
                     showButton: false
                 });
+            }
+
+            if (e.affectsConfiguration('chatide.aiProvider')) {
+                initApiProviderIfNeeded(context, true);
             }
         });
         
@@ -353,7 +360,6 @@ async function getGptResponse(userMessage: string, completionCallback: (completi
                 onUpdate: (completion: string) => {
                     if (completion) {
                         completionCallback(marked.marked(completion));
-
                     }
                 },
                 onComplete: (message: string) => {

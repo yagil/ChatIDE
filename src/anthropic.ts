@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from "vscode";
-import { Client, HUMAN_PROMPT } from "@anthropic-ai/sdk";
+import { Client, HUMAN_PROMPT, AI_PROMPT, CompletionResponse } from "./anthropic-sdk-simple";
 import { APIProvider } from "./apiProvider";
 
 export interface AnthropicParams {
@@ -8,6 +8,8 @@ export interface AnthropicParams {
     max_tokens: number;
     model: string;
 }
+
+const PROMPT_SUFFIX = "IMPORTANT: Please respond in Markdown format when appropriate.";
 
 /*
 * A function to convert from OpenAI format message array to Anthropic format message blob
@@ -23,14 +25,17 @@ export function convertOpenAIMessagesToAnthropicMessages(messages: any) {
     for (let i = 0; i < messages.length; i++) {
         const role = messages[i].role;
         const content = messages[i].content;
-        if (role === "user") {
+        if (role === "system") {
+            message += `\n\nHuman: ${content}. ${PROMPT_SUFFIX}`;
+        }
+        else if (role === "user") {
             message += `\n\nHuman: ${content}`;
         } else if (role === "assistant") {
             message += `\n\nAssistant: ${content}`;
         }
 
     }
-    return message;
+    return message+`${AI_PROMPT}`;
 }
 
 export class AnthropicProvider extends APIProvider {
@@ -66,6 +71,8 @@ export class AnthropicProvider extends APIProvider {
 
         const abortController = new AbortController();
 
+        console.log(`Anthropic: ${params.prompt}`);
+
         try {
             const completeMessage = await this.client.completeStream(
                 {
@@ -78,12 +85,16 @@ export class AnthropicProvider extends APIProvider {
                 },
                 {
                     onOpen: callbacks.onOpen,
-                    onUpdate: callbacks.onUpdate,
+                    onUpdate: (completion: CompletionResponse) => {
+                        if (completion.completion) {
+                            callbacks.onUpdate(completion.completion);
+                        }   
+                    },
                     signal: abortController.signal,
                 }
             );
             if (callbacks.onComplete) {
-                callbacks.onComplete(completeMessage);
+                callbacks.onComplete(completeMessage.completion);
             }
         } catch (error: any) {
             console.error("Error fetching stream:", error);
