@@ -45,8 +45,7 @@ export class Client {
         {
             onOpen,
             onUpdate,
-            signal,
-        }: { onOpen?: OnOpen; onUpdate?: OnUpdate; signal?: AbortSignal }
+        }: { onOpen?: OnOpen; onUpdate?: OnUpdate; }
     ): Promise<CompletionResponse> {
         const url = new URL(`${this.apiUrl}/v1/complete`);
         const postData = JSON.stringify({ ...params, stream: true });
@@ -121,13 +120,7 @@ export class Client {
             req.on('error', (error) => {
                 reject(error);
             });
-      
-            if (signal) {
-                signal.addEventListener('abort', () => {
-                    req.abort();
-                });
-            }
-      
+
             req.write(postData);
             req.end();
         });

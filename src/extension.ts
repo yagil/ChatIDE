@@ -161,16 +161,10 @@ export function activate(context: vscode.ExtensionContext) {
                     await getGptResponse(
                         message.userMessage,
                         (token) => {
-                            console.log("Got token: ", token);
                             chatIdePanel.webview.postMessage({ command: "gptResponse", token });
                         },
                         errorCallback
                     );
-
-                    // for await (const token of getGptResponse(message.userMessage, errorCallback)) {
-                    //     console.log("Got token: ", token);
-                    //     chatIdePanel.webview.postMessage({ command: "gptResponse", token });
-                    // }
                     return;
                 case "resetChat":
                     resetChat();

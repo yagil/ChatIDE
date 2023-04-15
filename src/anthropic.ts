@@ -69,8 +69,6 @@ export class AnthropicProvider extends APIProvider {
             throw new Error("Anthropic API client is not initialized.");
         }
 
-        const abortController = new AbortController();
-
         console.log(`Anthropic: ${params.prompt}`);
 
         try {
@@ -90,7 +88,6 @@ export class AnthropicProvider extends APIProvider {
                             callbacks.onUpdate(completion.completion);
                         }   
                     },
-                    signal: abortController.signal,
                 }
             );
             if (callbacks.onComplete) {
