@@ -1,7 +1,7 @@
-# ChatIDE - Converse with ChatGPT inside VS Code
+# ChatIDE - ChatGPT / Claude in VS Code
 
 🤖 Launch ChatIDE with `Cmd + Shift + i`.<br>
-💬 Use it just like you would use ChatGPT in the browser.
+💬 Use it just like you would use ChatGPT / Claude in the browser.
 <br>
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/yagil/ChatIDE?style=social)
@@ -19,19 +19,19 @@ https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide
 
 ## Usage
 
-1. Bring up ChatIDE with `Cmd + Shift + i`.
-2. On first launch, you'll be prompted to enter your OpenAI API key (stored in VSCode `secretStorage`).
+1. Bring up ChatIDE with `Cmd + Shift + i` (/ `Ctrl + Shift + i`).
+2. Choose your AI model. Currently supported: `['gpt-4', 'gpt-3.5-turbo'] (OpenAI)`, `'claude-v1.3' (Anthropic)`.
+2. On first launch, you'll be prompted to enter your API key for your chosen AI providers (will be stored in VSCode `secretStorage`).
 3. Enjoy!
 
 ## Configuration
 
 - Use the `Cmd + Shift + P` keychord and type `>Open ChatIDE Settings`
   - Choose your preferred `model`, `max_tokens`, and `temperature`.
-  - If you don't have access to `gpt-4`, choose another chat model e.g. `gpt-3.5-turbo` (only Chat models are supported)
   - Adjust the system prompt to your liking
   - Note: settings will auto save
-- Run ChatIDE with `Cmd + Shift + i`. You'll be asked for your OpenAI API key on first time you launch it.
-  - Note: your API key will be stored in [VS Code's `secretStorage`](https://code.visualstudio.com/api/references/vscode-api#SecretStorage)
+- Run ChatIDE with `Cmd + Shift + i`. You'll be asked for your OpenAI / Anthropic API key on first time you use the model.
+  - Note: your API keys will be stored in [VS Code's `secretStorage`](https://code.visualstudio.com/api/references/vscode-api#SecretStorage)
 <p align="center">
    <img width="1024" alt="image" src="https://user-images.githubusercontent.com/3611042/230432480-71859aec-d54a-48fb-a113-2ca9d28ae3ce.png">
 </p>
@@ -46,7 +46,7 @@ https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide
 
 ⚠️ This is an early prototype, use at your own peril.
 
-🧐 Remember to keep an eye on your OpenAI billing.
+🧐 Remember to keep an eye on your OpenAI / Anthropic billing.
 
 ## Credits
 

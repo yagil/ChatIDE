@@ -59,3 +59,10 @@ export async function promptForApiKey(provider: string, context: vscode.Extensio
         vscode.window.showErrorMessage('No API key entered. Please enter your API key to use ChatIDE.');
     }
 }
+
+export function providerFromModel(model: string) {
+    if (model.startsWith("gpt")) {
+        return "openai";
+    }
+    return "anthropic";
+}

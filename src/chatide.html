@@ -18,7 +18,10 @@
                 <button id="export-button" class="control-btn">Export Messages</button>
                 <button id="import-button" class="control-btn">Load Chat History</button>
               </div>
-              <p id="config-details">${modelConfigDetails}</p>
+              <div id="config-container">
+                <p id="config-details"><span id="model-prefix">Model: </span><span id="model-name">${modelConfigDetails}</span></p>
+                <button id="settings-button">⚙</button>
+              </div>
             </div>
             <div id="messages"></div>
             <div class="chat-bar">

@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as marked from 'marked';
 import * as fs from 'fs';
 
-import { getProviderErrorMsg, promptForApiKey } from './utils';
+import { getProviderErrorMsg, promptForApiKey, providerFromModel } from './utils';
 
 import { ChatCompletionRequestMessage } from "openai";
 
@@ -117,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
         const iconPath = chatIdePanel.webview.asWebviewUri(iconUri).toString();
 
         const model = vscode.workspace.getConfiguration('chatide').get('model') || "No model configured";
-        const provider = vscode.workspace.getConfiguration('chatide').get('aiProvider') || "No provider configured";
+        const provider = providerFromModel(model.toString());
 
         const errorCallback = (error: any) => {
             console.error('Error fetching stream:', error);
@@ -126,7 +126,7 @@ export function activate(context: vscode.ExtensionContext) {
             chatIdePanel.webview.postMessage({ command: "openAiError", error: humanRedableError });
         };
         
-        const configDetails = `Model: ${model.toString()}`;
+        const configDetails = model.toString();
         const resourcePaths = {
             htmlPath: htmlPath.fsPath,
             chatideJsPath: jsPath.toString(),
@@ -172,10 +172,10 @@ export function activate(context: vscode.ExtensionContext) {
                         console.error("Failed to import chat");
                     }
                     return;
-                case 'navigateToHighlightedCode':
+                case "navigateToHighlightedCode":
                     navigateToHighlightedCode();
                     return;
-                case 'insertCode': // used for drag and drop
+                case "insertCode": // used for drag and drop
                     const activeEditor = vscode.window.activeTextEditor;
                     if (activeEditor) {
                         const position = activeEditor.selection.active;
@@ -183,7 +183,12 @@ export function activate(context: vscode.ExtensionContext) {
                             editBuilder.insert(position, message.code);
                         });
                     }
+                    return;
+                case "openSettings":
+                    vscode.commands.executeCommand('workbench.action.openSettings', 'chatide');
+                    break;
                 }
+
             },
             null,
             context.subscriptions
@@ -208,8 +213,12 @@ export function activate(context: vscode.ExtensionContext) {
                 });
             }
 
-            if (e.affectsConfiguration('chatide.aiProvider')) {
+            if (e.affectsConfiguration('chatide.model')) {
                 initApiProviderIfNeeded(context, true);
+                chatIdePanel.webview.postMessage({
+                    command: 'updateModelConfigDetails',
+                    modelConfigDetails: vscode.workspace.getConfiguration('chatide').get('model')!,
+                });
             }
         });
         
@@ -276,13 +285,13 @@ async function getGptResponse(userMessage: string, completionCallback: (completi
     messages.push({ role: "user", content: userMessage });
   
     const maxTokens = vscode.workspace.getConfiguration("chatide").get("maxLength");
-    const provider = vscode.workspace.getConfiguration("chatide").get("aiProvider");
-    const model = vscode.workspace.getConfiguration("chatide").get("model");
+    const model = vscode.workspace.getConfiguration("chatide").get("model")!;
+    const provider = providerFromModel(model.toString());
     const temperature = vscode.workspace.getConfiguration("chatide").get("temperature");
   
-    if (!maxTokens || !model) {
+    if (!maxTokens) {
         vscode.window.showErrorMessage(
-            'Missing maxLength or model in the ChatIDE settings. Please add them using the "Open ChatIDE Settings" command and restart the extension.'
+            'Missing maxLength in the ChatIDE settings. Please add them using the "Open ChatIDE Settings" command and restart the extension.'
         );
         return;
     }
@@ -398,7 +407,8 @@ async function initApiProviderIfNeeded(context: vscode.ExtensionContext, force: 
         return;
     }
   
-    const providerType = vscode.workspace.getConfiguration("chatide").get("aiProvider");
+    const model = vscode.workspace.getConfiguration("chatide").get("model")!;
+    const providerType = providerFromModel(model.toString());
     if (!providerType) {
         vscode.window.showErrorMessage(
             'No provider found in the ChatIDE settings. Please add your provider using the "Open ChatIDE Settings" command and restart the extension.'

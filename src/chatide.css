@@ -37,6 +37,11 @@ h1#chat-title {
 
 #config-details {
   color:#ccc;
+  font-size: x-small;
+}
+
+#model-prefix {
+  color: #888;
 }
 
 #messages {
@@ -205,4 +210,20 @@ b {
   border: none;
   cursor: pointer;
   z-index: 1;
+}
+
+#config-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+#settings-button {
+  background-color:black;
+  border: none;
+  margin-left: 5px;
+  color: white;
+  font-size:large;
+  cursor: pointer;
 }

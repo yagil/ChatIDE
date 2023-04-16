@@ -1,9 +1,9 @@
 {
   "name": "chatide",
   "publisher": "ChatIDE",
-  "displayName": "ChatIDE: GPT/ChatGPT in VSCode (Open Source)",
-  "description": "Bring up ChatGPT with 'cmd + shift + i' ",
-  "version": "0.1.2",
+  "displayName": "ChatIDE: ChatGPT/Anthropic in VSCode (Open Source)",
+  "description": "Bring up ChatIDE with 'cmd + shift + i' ",
+  "version": "0.2.0",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
@@ -67,12 +67,12 @@
     "configuration": {
       "title": "ChatIDE",
       "properties": {
-        "chatide.aiProvider": {
+        "chatide.model": {
           "type": "string",
-          "default": "openai",
-          "enum": ["openai", "anthropic"],
-          "enumDescriptions": ["OpenAI's ChatGPT", "Anthropic's Claude"],
-          "description": "Select the AI provider for the generated text. Note that you must enter a model and API key for the selected provider.",
+          "default": "gpt-3.5-turbo",
+          "enum": ["gpt-3.5-turbo", "gpt-4", "claude-v1.3"],
+          "enumDescriptions": ["ChatGPT 3.5 (OpenAI)", "ChatGPT 4 (OpenAI)", "Claude v1.3 (Anthropic)"],
+          "description": "Select the AI model. You must have your own API key to use a model.",
           "scope": "window"
         },
         "chatide.systemPrompt": {
@@ -82,12 +82,6 @@
           "scope": "window",
           "editorType": "string",
           "editorMultiline": true
-        },
-        "chatide.model": {
-          "type": "string",
-          "default": "gpt-3.5-turbo",
-          "description": "Set the model to use for the generated text. Only Chat models are supported.",
-          "scope": "window"
         },
         "chatide.maxLength": {
           "type": "integer",
