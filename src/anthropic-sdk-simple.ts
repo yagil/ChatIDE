@@ -62,7 +62,8 @@ export class Client {
         return new Promise((resolve, reject) => {
             const req = https.request(url, options, (res: IncomingMessage) => {
                 if (res.statusCode !== 200) {
-                    reject(new Error(`Sampling error: ${res.statusCode} ${res.statusMessage}`));
+                    console.error(`${res}`);
+                    reject(new Error(`${res.statusCode} ${res.statusMessage}`));
                     return;
                 }
                 

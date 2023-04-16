@@ -7,7 +7,7 @@ export function getProviderErrorMsg(provider: string, error: any) {
     const epilogue = `
         \t • <b>Invalid API Key</b>: make sure you entered it correctly (Need help? See <a href="https://github.com/yagil/ChatIDE#configuration">Setting your AI provider API key</a>).<br>
         \t • <b>Invalid Model name</b>: make sure you chose a supported model. Your current model is <b>${model.toString()}</b><br>
-        \t • <b>Model not compatible with your API Key</b>: you might not have access to one of the newer models.<br>
+        \t • <b>Model not compatible with your API Key</b>: your key might not grant you access to this model.<br>
         \t • <b>Chat history too long</b>: models have a limited context window. Export your current history to file and start a new chat.<br><br>
         Double check your configuration and restart VS Code to try again.<br><br>    
         If the issue persists, please <a href="https://github.com/yagil/chatIDE/issues">open an issue on GitHub</a> or contact us on <a href="https://twitter.com/aichatide">Twitter</a>.
@@ -16,17 +16,17 @@ export function getProviderErrorMsg(provider: string, error: any) {
     if (provider === "openai") {
         return `
             <b>You're hitting an OpenAI API error.</b><br><br>
-            <b>Error message</b>: <i>'${error.message}'</i>.<br><br>
-            <u>Common reasons for OpenAI Errors</u>:<br><br>
+            <b>Error message</b>: <i>'${error}'</i>.<br><br>
+            <u>Common reasons for OpenAI errors</u>:<br><br>
             \t • <b>OpenAI might be having issues</b>: check the <a href="https://status.openai.com/">OpenAI system status page</a>.<br>
             \t • <b>Exceeded quota</b>: make sure your OpenAI billing is setup correctly.<br>
             ${epilogue}
         `;
-    } else if (provider === "anothropic") {
+    } else if (provider === "anthropic") {
         return `
             <b>You're hitting an Anthropic API error.</b><br><br>
-            <b>Error message</b>: <i>'${error.message}'</i>.<br><br>
-            <u>Common reasons for Anthropic Errors</u>:<br><br>
+            <b>Error message</b>: <i>'${error}'</i>.<br><br>
+            <u>Common reasons for Anthropic errors</u>:<br><br>
             \t • <b>Anthropic might be having issues</b>: check <a href="https://twitter.com/AnthropicAI">Anthropic's twitter page</a>.<br>
             \t • <b>Exceeded quota</b>: make sure your Anthropic billing is setup correctly.<br>
             ${epilogue}

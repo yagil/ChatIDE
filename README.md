@@ -36,10 +36,21 @@ https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide
    <img width="1024" alt="image" src="https://user-images.githubusercontent.com/3611042/230432480-71859aec-d54a-48fb-a113-2ca9d28ae3ce.png">
 </p>
 
+### Updating your API key
+
+1. Run `cmd + shift + P` (or `ctrl + shift + P`)
+2. Start typing `>ChatIDE`
+
+#### OpenAI
+3. Select `>Update your OpenAI API Key for ChatIDE`.
+
+#### Anthropic
+3. Select `>Update your Anthropic API Key for ChatIDE`.
+
 ## Known issues
 
 1. There's currently no way to stop the model from generating. You need to wait until it's done.
-2. Closing the ChatIDE pane while the model is generating will lead to a non-recoverable error. You'll need to restart VS Code to use ChatIDE again.
+2. Closing the ChatIDE pane while the model is generating might lead to a non-recoverable error. You'll need to restart VS Code to use ChatIDE again.
 3. Closing / re-opening the ChatIDE pane does not reset the messages history. You can reset the message history by clicking the "Reset Chat" button (don't do this while the model is generating!)
 
 ## Warning
@@ -50,4 +61,4 @@ https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide
 
 ## Credits
 
-ChatIDE was built using ChatIDE.
+ChatIDE continues to be built using ChatIDE.
