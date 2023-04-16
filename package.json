@@ -1,9 +1,9 @@
 {
   "name": "chatide",
   "publisher": "ChatIDE",
-  "displayName": "ChatIDE: GPT • ChatGPT • Anthropic (Open Source)",
-  "description": "Bring up ChatIDE with 'cmd + shift + i' ",
-  "version": "0.2.1",
+  "displayName": "ChatIDE - Coding Assistant (GPT/ChatGPT, Claude)",
+  "description": "ChatIDE is an open-source coding and debugging assistant that supports GPT/ChatGPT (OpenAI), and Claude (Anthropic). Supported models: [gpt4, gpt-3.5-turbo, claude-v1.3]. Import/export your conversation history. Bring up the assistant in a side pane by pressing cmd+shift+i.",
+  "version": "0.2.2",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
