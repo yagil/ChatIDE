@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ChatIDE</title>
+        <link rel="stylesheet" href="${paths.chatideCssPath}">
+    </head>
+    <body>
+        <div id="chat-container">
+            <div id="chat-header">
+              <div id="logo-container">
+                <img id="chat-logo" src="${paths.iconPath}">
+                <h1 id="chat-title">ChatIDE</h1>
+              </div>
+              <div id="chat-control">
+                <button id="reset-button" class="control-btn">Reset</button>
+                <button id="export-button" class="control-btn">Export Messages</button>
+                <button id="import-button" class="control-btn">Load Chat History</button>
+              </div>
+              <p id="config-details">${modelConfigDetails}</p>
+            </div>
+            <div id="messages"></div>
+            <div class="chat-bar">
+              <textarea id="message-input" spellcheck="true" oninput="autoResize(this)" placeholder="Type your question here..."></textarea>
+              <button id="send-button">Send</button>
+            </div>
+            <div id="status-bar">
+              <span id="highlighted-code-status">${codeHighlightStatusCopy}</span>
+              <button id="show-code" style="display:none;">Show code</button>
+            </div>
+        </div>
+        <link rel="stylesheet" href="${paths.highlightJsCssPath}">
+        <script src="${paths.highlightJsScriptPath}"></script>
+        <script src="${paths.chatideJsPath}"></script>
+     </body>
+</html>

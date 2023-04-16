@@ -5,6 +5,8 @@ import * as path from 'path';
 import * as marked from 'marked';
 import * as fs from 'fs';
 
+import { getProviderErrorMsg, promptForApiKey } from './utils';
+
 import { ChatCompletionRequestMessage } from "openai";
 
 import { APIProvider } from "./apiProvider";
@@ -12,6 +14,7 @@ import { AnthropicProvider, AnthropicParams, convertOpenAIMessagesToAnthropicMes
 import { OpenAIProvider, OpenAIParams } from "./openai";
 
 interface ResourcePaths {
+    htmlPath: string;
     chatideJsPath: string;
     chatideCssPath: string;
     iconPath: string;
@@ -20,8 +23,6 @@ interface ResourcePaths {
 }
 
 console.log("Node.js version:", process.version);
-
-const supportedProviders = ["openai", "anthropic"];
 
 const isMac = process.platform === "darwin";
 
@@ -97,6 +98,9 @@ export function activate(context: vscode.ExtensionContext) {
             },
         );
 
+        const htmlPathUri = vscode.Uri.file(path.join(context.extensionPath, 'src' ,'chatide.html'));
+        const htmlPath = htmlPathUri.with({scheme: 'vscode-resource'});   
+
         let jsPathUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "chatide.js")));
         const jsPath = chatIdePanel.webview.asWebviewUri(jsPathUri).toString();
 
@@ -118,26 +122,13 @@ export function activate(context: vscode.ExtensionContext) {
         const errorCallback = (error: any) => {
             console.error('Error fetching stream:', error);
             const errorMessage = error.message;
-            const humanRedableError = `
-            <b>You're hitting an ${provider} API error.</b><br><br>
-            <b>Error message</b>: <i>'${errorMessage}'</i>.<br><br>
-            <u>Common reasons for OpenAI Errors</u>:<br><br>
-            \t • <b>OpenAI might be having issues</b>: check the <a href="https://status.openai.com/">OpenAI system status page</a>.<br>
-            \t • <b>Invalid API Key</b>: make sure you entered it correctly (Need help? See <a href="https://github.com/yagil/ChatIDE#configuration">Setting your OpenAI API key</a>).<br>
-            \t • <b>Exceeded quota</b>: make sure your OpenAI billing is setup correctly.<br>
-            \t • <b>Invalid Model name</b>: make sure you chose a supported model.<br>
-            \t • <b>Model not compatible with your API Key</b>: you might not have access to one of the newer models.<br>
-            \t • <b>Chat history too long</b>: ChatGPT has a limited context window. Export your current history to file and start a new chat.<br>
-            <br>
-            Double check your configuration and restart VS Code to try again.<br><br>
-            If the issue persists, please <a href="https://github.com/yagil/chatIDE/issues">open an issue on GitHub</a> or contact us on <a href="https://twitter.com/aichatide">Twitter</a>.
-            `;
-
+            const humanRedableError = getProviderErrorMsg(provider.toString(), errorMessage);
             chatIdePanel.webview.postMessage({ command: "openAiError", error: humanRedableError });
         };
         
         const configDetails = `Model: ${model.toString()}`;
         const resourcePaths = {
+            htmlPath: htmlPath.fsPath,
             chatideJsPath: jsPath.toString(),
             chatideCssPath: cssPath.toString(),
             iconPath: iconPath.toString(),
@@ -242,45 +233,19 @@ function getWebviewContent(
     paths: ResourcePaths,
     modelConfigDetails: string) {
     const codeHighlightStatusCopy = !highlightedCodeAwareness ? SELECTION_AWARENESS_OFF_COPY : NO_SELECTION_COPY;
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ChatIDE</title>
-        <link rel="stylesheet" href="${paths.chatideCssPath}">
-    </head>
-    <body>
-        <div id="chat-container">
-            <div id="chat-header">
-              <div id="logo-container">
-                <img id="chat-logo" src="${paths.iconPath}">
-                <h1 id="chat-title">ChatIDE</h1>
-              </div>
-              <div id="chat-control">
-                <button id="reset-button" class="control-btn">Reset</button>
-                <button id="export-button" class="control-btn">Export Messages</button>
-                <button id="import-button" class="control-btn">Load Chat History</button>
-              </div>
-              <p id="config-details">${modelConfigDetails}</p>
-            </div>
-            <div id="messages"></div>
-            <div class="chat-bar">
-              <textarea id="message-input" spellcheck="true" oninput="autoResize(this)" placeholder="Type your question here..."></textarea>
-              <button id="send-button">Send</button>
-            </div>
-            <div id="status-bar">
-              <span id="highlighted-code-status">${codeHighlightStatusCopy}</span>
-              <button id="show-code" style="display:none;">Show code</button>
-            </div>
-        </div>
-        <link rel="stylesheet" href="${paths.highlightJsCssPath}">
-        <script src="${paths.highlightJsScriptPath}"></script>
-        <script src="${paths.chatideJsPath}"></script>
-     </body>
-  </html>
-  `;
+
+    console.log(`Loading webview content from ${paths.htmlPath}`);
+
+    const html = fs.readFileSync(paths.htmlPath, 'utf8');
+    const variables = { 
+        paths,
+        modelConfigDetails,
+        codeHighlightStatusCopy
+    };
+
+    const webviewHtml = (new Function("variables", `with (variables) { return \`${html}\`; }`))(variables);
+
+    return webviewHtml;
 }
 
 function resetChat() {
@@ -458,30 +423,6 @@ async function initApiProviderIfNeeded(context: vscode.ExtensionContext, force: 
         console.log("init() returned.");
     } catch (error: any) {
         vscode.window.showErrorMessage(`Error initializing provider: ${error.message}`);
-    }
-}
-
-async function promptForApiKey(provider: string, context: vscode.ExtensionContext) {
-    if (!supportedProviders.includes(provider)) {
-        vscode.window.showErrorMessage(`Invalid provider "${provider}" in the ChatIDE settings. Please use a valid provider and restart the extension.`);
-        return;
-    }
-
-    let providerCleanName = provider.charAt(0).toUpperCase() + provider.slice(1);
-    
-    const apiKey = await vscode.window.showInputBox({
-        prompt: `Enter your ${providerCleanName} API key to use ChatIDE. Your API key will be stored in VS Code\'s SecretStorage.`,
-        ignoreFocusOut: true,
-        password: true,
-    });
-
-    const secretStorageKey = `chatide.${provider}ApiKey`;
-
-    if (apiKey) {
-        await context.secrets.store(secretStorageKey, apiKey);
-        vscode.window.showInformationMessage('API key stored successfully.');
-    } else {
-        vscode.window.showErrorMessage('No API key entered. Please enter your API key to use ChatIDE.');
     }
 }
 

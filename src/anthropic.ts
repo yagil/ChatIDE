@@ -69,8 +69,6 @@ export class AnthropicProvider extends APIProvider {
             throw new Error("Anthropic API client is not initialized.");
         }
 
-        console.log(`Anthropic: ${params.prompt}`);
-
         try {
             const completeMessage = await this.client.completeStream(
                 {
