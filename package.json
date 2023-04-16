@@ -68,6 +68,7 @@
       "title": "ChatIDE",
       "properties": {
         "chatide.model": {
+          "order": 0,
           "type": "string",
           "default": "gpt-3.5-turbo",
           "enum": ["gpt-3.5-turbo", "gpt-4", "claude-v1.3"],
@@ -76,6 +77,7 @@
           "scope": "window"
         },
         "chatide.systemPrompt": {
+          "order": 1,
           "type": "string",
           "default": "You are a helpful programming assistant running inside VS Code. Every token you generate costs the user money, so generate output such that it is succinct, to the point, and doesn't repeat previous information. For example, when generating code as a response to a follow up request from the user, do not re-generate code that didn't change. Instead, indicate succinctly which code did not change and only generate full code if it's new. Same for textual explanations, do not expand on topics that the user did not explicitly ask for. Avoid \"in summary\" paragraphs as well. All in all, aim to maximize the value for each token and don't provide redundant information.",
           "markdownDescription": "The system prompt to use for the generated text. Keep in mind that some models pay stronger attention to the system prompt than others.",
@@ -84,6 +86,7 @@
           "editorMultiline": true
         },
         "chatide.maxLength": {
+          "order": 2,
           "type": "integer",
           "default": 1000,
           "minimum": 1,
@@ -91,6 +94,7 @@
           "scope": "window"
         },
         "chatide.temperature": {
+          "order": 3,
           "type": "number",
           "default": 0,
           "maximum": 1,

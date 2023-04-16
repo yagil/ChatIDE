@@ -462,7 +462,7 @@ function handleSelectionChange(event: vscode.TextEditorSelectionChangeEvent, cha
         const numCharacters = selectedCode.length;
         chatIdePanel.webview.postMessage({
             command: 'updateHighlightedCodeStatus',
-            status: `${numCharacters} characters (${getTokenEstimateString(numCharacters)}) are highlighted. This code will be included in your message to GPT.`,
+            status: `${numCharacters} characters (${getTokenEstimateString(numCharacters)}) are highlighted. This code will be included in your message to the assistant.`,
             showButton: true
         });
     } else if (!highlightedCodeAwareness) {
