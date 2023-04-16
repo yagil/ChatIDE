@@ -24,9 +24,7 @@
   </a>
 </p>
 
-<p align="center">
-  <img width="1024" alt="image" src="https://user-images.githubusercontent.com/3611042/232337055-e7800e35-a1b3-4317-8527-b49d0cba0d61.png">
-</p>
+https://user-images.githubusercontent.com/3611042/232339222-c0532f49-6772-46c5-b29e-be00f77c1c1c.mov
 
 ## Installation
 
