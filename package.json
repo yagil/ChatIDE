@@ -1,9 +1,9 @@
 {
   "name": "chatide",
   "publisher": "ChatIDE",
-  "displayName": "ChatIDE: ChatGPT/Anthropic in VSCode (Open Source)",
+  "displayName": "ChatIDE: GPT • ChatGPT • Anthropic (Open Source)",
   "description": "Bring up ChatIDE with 'cmd + shift + i' ",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
