@@ -1,7 +1,7 @@
 <br>
 <p align="center">
-  <a href="https://chatide.dev">
-    <img src="https://user-images.githubusercontent.com/3611042/232336469-dfb39213-00b4-48cf-8e4b-c84c111ef30a.png" alt="ChatIDE logo" width="350px">
+  <a href="https://chatide.dev" target="_blank">
+    <img width="350" alt="image" src="https://user-images.githubusercontent.com/3611042/232338632-9c49eb40-f52b-40bc-87af-d6ffd3befc8c.png" alt="ChatIDE logo" >
   </a>
 </p>
 
@@ -10,7 +10,7 @@
   Converse with <a href="https://openai.com/blog/openai-api" target="_blank">OpenAI's ChatGPT</a> or <a href="https://console.anthropic.com/docs/api" target="_blank">Anthropic's Claude</a> in VSCode
 </p>
 <p align="center">
-<a href="https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide">
+<a href="https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide" target="_blank">
   <img width="309" alt="image" src="https://user-images.githubusercontent.com/3611042/232336724-71df6bf8-94e0-4b08-93fc-089ed70ad8ed.png">
 </a>
 </p>
