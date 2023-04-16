@@ -5,9 +5,16 @@ import * as path from 'path';
 import * as marked from 'marked';
 import * as fs from 'fs';
 
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
+import { getProviderErrorMsg, promptForApiKey, providerFromModel } from './utils';
+
+import { ChatCompletionRequestMessage } from "openai";
+
+import { APIProvider } from "./apiProvider";
+import { AnthropicProvider, AnthropicParams, convertOpenAIMessagesToAnthropicMessages } from "./anthropic";
+import { OpenAIProvider, OpenAIParams } from "./openai";
 
 interface ResourcePaths {
+    htmlPath: string;
     chatideJsPath: string;
     chatideCssPath: string;
     iconPath: string;
@@ -15,14 +22,15 @@ interface ResourcePaths {
     highlightJsScriptPath: string;
 }
 
+console.log("Node.js version:", process.version);
+
 const isMac = process.platform === "darwin";
 
 const OS_LOCALIZED_KEY_CHORD = isMac ? "Cmd+Shift+P" : "Ctrl+Shift+P";
 const NO_SELECTION_COPY = "No code is highlighted. Highlight code to include it in the message to ChatGPT.";
 const SELECTION_AWARENESS_OFF_COPY = `Code selection awareness is turned off. To turn it on, go to settings (${OS_LOCALIZED_KEY_CHORD}).`;
 
-let openai: OpenAIApi;
-let openAiApiKey: string;
+let apiProvider: APIProvider | undefined;
 let messages: ChatCompletionRequestMessage[] = [];
 
 let selectedCode: string;
@@ -42,29 +50,35 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('chatide.updateApiKey', async () => {
-            await promptForApiKey(context);
+        vscode.commands.registerCommand('chatide.updateOpenAiApiKey', async () => {
+            await promptForApiKey("openai", context);
         })
     );
-  
-    context.secrets.get('chatide.apiKey').then(async (value) => {
-        if (!value) {
-            await promptForApiKey(context);
-        } else {
-            openAiApiKey = value;
-        }
-    });
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('chatide.updateAnthropicApiKey', async () => {
+            await promptForApiKey("anthropic", context);
+        })
+    );
 
     const secretStorage = context.secrets;
     const secretChangeListener = secretStorage.onDidChange(async (e: vscode.SecretStorageChangeEvent) => {
-        if (e.key === 'chatide.apiKey') {
-            const key = await context.secrets.get('chatide.apiKey');
+        const forceReinit = true;
+      
+        if (e.key === "chatide.anthropicApiKey") {
+            const key = await context.secrets.get("chatide.anthropicApiKey");
             if (!key) {
                 return;
-            }   
-            openAiApiKey = key;
-            const forceReinit = true;
-            initGptIfNeeded(forceReinit);
+            }
+            // Reinitialize the API provider if the Anthropic API key changes
+            await initApiProviderIfNeeded(context, forceReinit);
+        } else if (e.key === "chatide.openAiApiKey") {
+            const key = await context.secrets.get("chatide.openAiApiKey");
+            if (!key) {
+                return;
+            }
+            // Reinitialize the API provider if the OpenAI API key changes
+            await initApiProviderIfNeeded(context, forceReinit);
         }
     });
   
@@ -84,6 +98,9 @@ export function activate(context: vscode.ExtensionContext) {
             },
         );
 
+        const htmlPathUri = vscode.Uri.file(path.join(context.extensionPath, 'src' ,'chatide.html'));
+        const htmlPath = htmlPathUri.with({scheme: 'vscode-resource'});   
+
         let jsPathUri = vscode.Uri.file(context.asAbsolutePath(path.join('src', "chatide.js")));
         const jsPath = chatIdePanel.webview.asWebviewUri(jsPathUri).toString();
 
@@ -100,30 +117,18 @@ export function activate(context: vscode.ExtensionContext) {
         const iconPath = chatIdePanel.webview.asWebviewUri(iconUri).toString();
 
         const model = vscode.workspace.getConfiguration('chatide').get('model') || "No model configured";
+        const provider = providerFromModel(model.toString());
 
         const errorCallback = (error: any) => {
             console.error('Error fetching stream:', error);
             const errorMessage = error.message;
-            const humanRedableError = `
-            <b>You're hitting an OpenAI API error.</b><br><br>
-            <b>Error message</b>: <i>'${errorMessage}'</i>.<br><br>
-            <u>Common reasons for OpenAI Errors</u>:<br><br>
-            \t • <b>OpenAI might be having issues</b>: check the <a href="https://status.openai.com/">OpenAI system status page</a>.<br>
-            \t • <b>Invalid API Key</b>: make sure you entered it correctly (Need help? See <a href="https://github.com/yagil/ChatIDE#configuration">Setting your OpenAI API key</a>).<br>
-            \t • <b>Exceeded quota</b>: make sure your OpenAI billing is setup correctly.<br>
-            \t • <b>Invalid Model name</b>: make sure you chose a supported model.<br>
-            \t • <b>Model not compatible with your API Key</b>: you might not have access to one of the newer models.<br>
-            \t • <b>Chat history too long</b>: ChatGPT has a limited context window. Export your current history to file and start a new chat.<br>
-            <br>
-            Double check your configuration and restart VS Code to try again.<br><br>
-            If the issue persists, please <a href="https://github.com/yagil/chatIDE/issues">open an issue on GitHub</a> or contact us on <a href="https://twitter.com/aichatide">Twitter</a>.
-            `;
-
+            const humanRedableError = getProviderErrorMsg(provider.toString(), errorMessage);
             chatIdePanel.webview.postMessage({ command: "openAiError", error: humanRedableError });
         };
         
-        const configDetails = `Model: ${model.toString()}`;
+        const configDetails = model.toString();
         const resourcePaths = {
+            htmlPath: htmlPath.fsPath,
             chatideJsPath: jsPath.toString(),
             chatideCssPath: cssPath.toString(),
             iconPath: iconPath.toString(),
@@ -142,9 +147,15 @@ export function activate(context: vscode.ExtensionContext) {
                     chatIdePanel.webview.postMessage({ command: "sentUserMessage", userMessageMarkdown });
                     
                     // Proceed to query OpenAI API and stream back the generated tokens.
-                    for await (const token of getGptResponse(message.userMessage, errorCallback)) {
-                        chatIdePanel.webview.postMessage({ command: "gptResponse", token });
-                    }
+                    await initApiProviderIfNeeded(context);
+
+                    await getGptResponse(
+                        message.userMessage,
+                        (token) => {
+                            chatIdePanel.webview.postMessage({ command: "gptResponse", token });
+                        },
+                        errorCallback
+                    );
                     return;
                 case "resetChat":
                     resetChat();
@@ -161,10 +172,10 @@ export function activate(context: vscode.ExtensionContext) {
                         console.error("Failed to import chat");
                     }
                     return;
-                case 'navigateToHighlightedCode':
+                case "navigateToHighlightedCode":
                     navigateToHighlightedCode();
                     return;
-                case 'insertCode': // used for drag and drop
+                case "insertCode": // used for drag and drop
                     const activeEditor = vscode.window.activeTextEditor;
                     if (activeEditor) {
                         const position = activeEditor.selection.active;
@@ -172,7 +183,12 @@ export function activate(context: vscode.ExtensionContext) {
                             editBuilder.insert(position, message.code);
                         });
                     }
+                    return;
+                case "openSettings":
+                    vscode.commands.executeCommand('workbench.action.openSettings', 'chatide');
+                    break;
                 }
+
             },
             null,
             context.subscriptions
@@ -194,6 +210,14 @@ export function activate(context: vscode.ExtensionContext) {
                     command: 'updateHighlightedCodeStatus',
                     status: !highlightedCodeAwareness ? SELECTION_AWARENESS_OFF_COPY : NO_SELECTION_COPY,
                     showButton: false
+                });
+            }
+
+            if (e.affectsConfiguration('chatide.model')) {
+                initApiProviderIfNeeded(context, true);
+                chatIdePanel.webview.postMessage({
+                    command: 'updateModelConfigDetails',
+                    modelConfigDetails: vscode.workspace.getConfiguration('chatide').get('model')!,
                 });
             }
         });
@@ -218,45 +242,19 @@ function getWebviewContent(
     paths: ResourcePaths,
     modelConfigDetails: string) {
     const codeHighlightStatusCopy = !highlightedCodeAwareness ? SELECTION_AWARENESS_OFF_COPY : NO_SELECTION_COPY;
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ChatIDE</title>
-        <link rel="stylesheet" href="${paths.chatideCssPath}">
-    </head>
-    <body>
-        <div id="chat-container">
-            <div id="chat-header">
-              <div id="logo-container">
-                <img id="chat-logo" src="${paths.iconPath}">
-                <h1 id="chat-title">ChatIDE</h1>
-              </div>
-              <div id="chat-control">
-                <button id="reset-button" class="control-btn">Reset</button>
-                <button id="export-button" class="control-btn">Export Messages</button>
-                <button id="import-button" class="control-btn">Load Chat History</button>
-              </div>
-              <p id="config-details">${modelConfigDetails}</p>
-            </div>
-            <div id="messages"></div>
-            <div class="chat-bar">
-              <textarea id="message-input" spellcheck="true" oninput="autoResize(this)" placeholder="Type your question here..."></textarea>
-              <button id="send-button">Send</button>
-            </div>
-            <div id="status-bar">
-              <span id="highlighted-code-status">${codeHighlightStatusCopy}</span>
-              <button id="show-code" style="display:none;">Show code</button>
-            </div>
-        </div>
-        <link rel="stylesheet" href="${paths.highlightJsCssPath}">
-        <script src="${paths.highlightJsScriptPath}"></script>
-        <script src="${paths.chatideJsPath}"></script>
-     </body>
-  </html>
-  `;
+
+    console.log(`Loading webview content from ${paths.htmlPath}`);
+
+    const html = fs.readFileSync(paths.htmlPath, 'utf8');
+    const variables = { 
+        paths,
+        modelConfigDetails,
+        codeHighlightStatusCopy
+    };
+
+    const webviewHtml = (new Function("variables", `with (variables) { return \`${html}\`; }`))(variables);
+
+    return webviewHtml;
 }
 
 function resetChat() {
@@ -271,89 +269,72 @@ function resetChat() {
     messages.push({"role": "system", "content": systemPrompt.toString()});
 }
 
-async function* getGptResponse(userMessage: string, errorCallback?: (error: any) => void) {
-    initGptIfNeeded();
-
+async function getGptResponse(userMessage: string, completionCallback: (completion: string) => void ,errorCallback?: (error: any) => void) {
+    if (!apiProvider) {
+        throw new Error("API provider is not initialized.");
+    }
+    
     if (highlightedCodeAwareness && selectedCodeSentToGpt !== selectedCode) {
-        console.log("Including highlighted text in GPT request.");
+        console.log("Including highlighted text in API request.");
         userMessage = `${prepareSelectedCodeContext()} ${userMessage}`;
         selectedCodeSentToGpt = selectedCode;
     } else {
-        console.log("Not including highlighted text in GPT request because it's already been sent");
+        console.log("Not including highlighted text in API request because it's already been sent");
     }
-
-    messages.push({"role": "user", "content": userMessage});
-
-    const maxTokens = vscode.workspace.getConfiguration('chatide').get('maxLength');
+  
+    messages.push({ role: "user", content: userMessage });
+  
+    const maxTokens = vscode.workspace.getConfiguration("chatide").get("maxLength");
+    const model = vscode.workspace.getConfiguration("chatide").get("model")!;
+    const provider = providerFromModel(model.toString());
+    const temperature = vscode.workspace.getConfiguration("chatide").get("temperature");
+  
     if (!maxTokens) {
-        vscode.window.showErrorMessage('No max length found in the ChatIDE settings. Please add your max length using the "Open ChatIDE Settings" command and restart the extension.');
+        vscode.window.showErrorMessage(
+            'Missing maxLength in the ChatIDE settings. Please add them using the "Open ChatIDE Settings" command and restart the extension.'
+        );
         return;
     }
 
-    const temperature = vscode.workspace.getConfiguration('chatide').get('temperature');
-    if (temperature === undefined) {
-        vscode.window.showErrorMessage('No temperature found in the ChatIDE settings. Please add your temperature using the "Open ChatIDE Settings" command and restart the extension.');
-        return;
-    }
+    let params: OpenAIParams | AnthropicParams;
 
-    const model = vscode.workspace.getConfiguration('chatide').get('model');
-    if (!model) {
-        vscode.window.showErrorMessage("No model found in the ChatIDE settings. Please add your model using the 'Open ChatIDE Settings' command and restart the extension.");
-        return;
-    }
-
-    const maxTokensNumber = Number(maxTokens);
-    const temperatureNumber = Number(temperature);
-    const modelString = model.toString();
-
-    try {
-        const res = await openai.createChatCompletion({
-            model: modelString,
+    if (provider === "openai") {
+        params = {
+            model: model.toString(),
             messages: messages,
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            max_tokens: maxTokensNumber,
-            temperature: temperatureNumber,
+            max_tokens: Number(maxTokens),
+            temperature: Number(temperature),
             stream: true,
-        }, { responseType: 'stream' });
-
-        for await (const token of streamToTokens(res, errorCallback)) {
-            yield token;
-        }
-    } catch (error: any) {
-        if (errorCallback) {
-            errorCallback(error);
-        }
+        };
+    } else if (provider === "anthropic") {
+        params = {
+            prompt: convertOpenAIMessagesToAnthropicMessages(messages),
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            max_tokens: Number(maxTokens),
+            model: model.toString(),
+        };
+    } else {
+        vscode.window.showErrorMessage(
+            'Unsupported AI provider in the ChatIDE settings. Please add it using the "Open ChatIDE Settings" command and restart the extension.'
+        );
+        return;
     }
-}
-
-async function* streamToTokens(stream: any, errorCallback?: (error: any) => void) {
-    let buffer = '';
-    let gptMessage = '';
-
+  
     try {
-        for await (const chunk of stream.data) {
-            buffer += chunk.toString('utf8');
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-            for (const line of lines) {
-                const message = line.replace(/^data: /, '');
-                if (message === '[DONE]') {
-                    messages.push({"role": "assistant", "content": gptMessage});
-                    return;
-                }
-                try {
-                    const json = JSON.parse(message);
-                    const token = json.choices[0].delta.content;
-                    if (token) {
-                        gptMessage += token;
-                        yield marked.marked(gptMessage);
-                    }  
-                } catch (error) {
-                    // Dunno why yet, but parsing the message can result in "SyntaxError: Unexpected end of JSON input"
-                    continue;
+        await apiProvider.completeStream(
+            params,
+            {
+                onUpdate: (completion: string) => {
+                    if (completion) {
+                        completionCallback(marked.marked(completion));
+                    }
+                },
+                onComplete: (message: string) => {
+                    messages.push({"role": "assistant", "content":  marked.marked(message)});
                 }
             }
-        }
+        );
     } catch (error: any) {
         if (errorCallback) {
             errorCallback(error);
@@ -419,38 +400,39 @@ async function importChat() {
     return false;
 }
 
-async function initGptIfNeeded(force: boolean = false) {
-    // If the API is already initialized, don't do anything
-    // unless we're forcing a re-initialization.
-    if (openai !== undefined && !force) {
-        return;
-    }
-    
-    // We should have the API key at this stage.
-    if (!openAiApiKey) {
-        vscode.window.showErrorMessage('No API key found in the secret storage. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
+async function initApiProviderIfNeeded(context: vscode.ExtensionContext, force: boolean = false) {
+    console.log("Initializing API provider...");
+    if (apiProvider !== undefined && !force) {
+        console.log("API provider already initialized.");
         return;
     }
   
-    console.log("Initializating OpenAI API");
-    const configuration = new Configuration({
-        apiKey: openAiApiKey,
-    });
-    openai = new OpenAIApi(configuration);
-}
-
-async function promptForApiKey(context: vscode.ExtensionContext) {
-    const apiKey = await vscode.window.showInputBox({
-        prompt: '[First time only]: Enter your Open API key to use ChatIDE. Your API key will be stored in VS Code\'s SecretStorage.',
-        ignoreFocusOut: true,
-        password: true,
-    });
-
-    if (apiKey) {
-        await context.secrets.store('chatide.apiKey', apiKey);
-        vscode.window.showInformationMessage('API key stored successfully.');
+    const model = vscode.workspace.getConfiguration("chatide").get("model")!;
+    const providerType = providerFromModel(model.toString());
+    if (!providerType) {
+        vscode.window.showErrorMessage(
+            'No provider found in the ChatIDE settings. Please add your provider using the "Open ChatIDE Settings" command and restart the extension.'
+        );
+        return;
+    }
+  
+    if (providerType === "anthropic") {
+        apiProvider = new AnthropicProvider(context);
+    } else if (providerType === "openai") {
+        apiProvider = new OpenAIProvider(context);
     } else {
-        vscode.window.showErrorMessage('No API key entered. Please add your API key using the "Open ChatIDE Settings" command and restart the extension.');
+        vscode.window.showErrorMessage(
+            `Invalid provider "${providerType}" in the ChatIDE settings. Please use a valid provider and restart the extension.`
+        );
+        return;
+    }
+  
+    try {
+        console.log("Calling init()");
+        await apiProvider.init();
+        console.log("init() returned.");
+    } catch (error: any) {
+        vscode.window.showErrorMessage(`Error initializing provider: ${error.message}`);
     }
 }
 
@@ -480,7 +462,7 @@ function handleSelectionChange(event: vscode.TextEditorSelectionChangeEvent, cha
         const numCharacters = selectedCode.length;
         chatIdePanel.webview.postMessage({
             command: 'updateHighlightedCodeStatus',
-            status: `${numCharacters} characters (${getTokenEstimateString(numCharacters)}) are highlighted. This code will be included in your message to GPT.`,
+            status: `${numCharacters} characters (${getTokenEstimateString(numCharacters)}) are highlighted. This code will be included in your message to the assistant.`,
             showButton: true
         });
     } else if (!highlightedCodeAwareness) {
@@ -497,7 +479,6 @@ function handleSelectionChange(event: vscode.TextEditorSelectionChangeEvent, cha
         });
     }
 }
-
 
 function prepareSelectedCodeContext() {
     return `

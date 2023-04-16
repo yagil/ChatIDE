@@ -30,6 +30,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    document.getElementById('config-container').addEventListener('click', () => {
+        vscode.postMessage({
+            command: 'openSettings'
+        });
+    });
+
     document.getElementById('show-code').addEventListener('click', () => {
         vscode.postMessage({ command: 'navigateToHighlightedCode' });
     });    
@@ -63,6 +69,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('show-code').style.display = 'none';
                 document.getElementById('highlighted-code-status').classList.remove('white-text');
             }
+            break;
+        case "updateModelConfigDetails":
+            document.getElementById('model-name').textContent = message.modelConfigDetails;
             break;
         }
     });
