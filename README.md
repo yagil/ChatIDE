@@ -1,6 +1,7 @@
+<br>
 <p align="center">
   <a href="https://chatide.dev">
-    <img src="https://user-images.githubusercontent.com/3611042/232336469-dfb39213-00b4-48cf-8e4b-c84c111ef30a.png" alt="ChatIDE logo" width="400px">
+    <img src="https://user-images.githubusercontent.com/3611042/232336469-dfb39213-00b4-48cf-8e4b-c84c111ef30a.png" alt="ChatIDE logo" width="350px">
   </a>
 </p>
 
