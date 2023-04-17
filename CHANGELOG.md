@@ -2,6 +2,11 @@
 
 All notable changes to the "ChatIDE" extension will be documented in this file.
 
+## [0.2.0]
+
+### Added
+- Support for Anthropic's Claude
+
 ## [0.1.0]
 
 ### Added
