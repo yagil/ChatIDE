@@ -24,7 +24,7 @@
   </a>
 </p>
 
-https://user-images.githubusercontent.com/3611042/232339222-c0532f49-6772-46c5-b29e-be00f77c1c1c.mov
+[![Video demo](https://chatide.dev/assets/example.png)](https://user-images.githubusercontent.com/3611042/232339222-c0532f49-6772-46c5-b29e-be00f77c1c1c.mov) 
 
 ## Installation
 
