@@ -93,7 +93,18 @@ export class Client {
                                 return;
                             }
 
-                            const completion = JSON.parse(msgRaw) as CompletionResponse;
+                            let completion;
+                            try {
+                                completion = JSON.parse(msgRaw) as CompletionResponse;
+                            } catch (error) {
+                                // Known issue: the anthropic API will send occasional "ping" events that look like this:
+                                //   event: ping
+                                //   data: 2023-04-17 18:48:10.253907
+                                // These will trigger this catch clause (not ideal.)
+                                console.error(`Error parsing completion: ${error}\n\n${msgRaw}`);
+                                continue;
+                            }
+                            
                             if (onUpdate) {
                                 Promise.resolve(onUpdate(completion)).catch((error) => {
                                     reject(error);
