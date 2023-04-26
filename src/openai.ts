@@ -21,15 +21,8 @@ export class OpenAIProvider extends APIProvider {
     }
   
     async init() {
-        // Backwards compatibility with old API key
-        // To avoid prompting existing users for their API key again
-        // TODO: remove when the majority of users joined after this change.
-        let openAiApiKey = await this.context.secrets.get("chatide.apiKey");
-        
-        if (!openAiApiKey) {
-            openAiApiKey = await this.context.secrets.get("chatide.openAiApiKey");
-        }
-        
+        let openAiApiKey = await this.context.secrets.get("chatide.openAiApiKey");
+
         if (!openAiApiKey) {
             openAiApiKey = await vscode.window.showInputBox({
                 prompt: "Enter your OpenAI API key:",
