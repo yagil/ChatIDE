@@ -4,21 +4,31 @@
     <img width="350" alt="image" src="https://user-images.githubusercontent.com/3611042/232338632-9c49eb40-f52b-40bc-87af-d6ffd3befc8c.png" alt="ChatIDE logo" >
   </a>
 </p>
-
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide" target="_blank">
+    <img src="https://img.shields.io/visual-studio-marketplace/d/chatide.chatide?logo=visual-studio-code&style=social" alt="Installs">
+  </a>
+  <span> </span>
+  <a href="https://github.com/yagil/ChatIDE" target="_blank">
+      <img src="https://img.shields.io/github/stars/yagil/ChatIDE?style=social" alt="Github repo stars">
+  </a>
+  <span> </span>
+  <a href="https://twitter.com/chat_ide" target="_blank">
+      <img src="https://img.shields.io/twitter/url/https/twitter.com/Chat_IDE.svg?style=social&label=Follow%20%40Chat_IDE" alt="Chat_IDE twitter">
+  </a>
+</p>
 <p align="center">
     <b>ChatIDE - AI assistant in your IDE</b><br/>
   Converse with <a href="https://openai.com/blog/openai-api" target="_blank">OpenAI's ChatGPT</a> or <a href="https://console.anthropic.com/docs/api" target="_blank">Anthropic's Claude</a> in VSCode
 </p>
+
 <p align="center">
-<a href="https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide" target="_blank">
-  <img width="309" alt="image" src="https://user-images.githubusercontent.com/3611042/232336724-71df6bf8-94e0-4b08-93fc-089ed70ad8ed.png">
-</a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=ChatIDE.chatide" target="_blank">
+    <img width="309" alt="image" src="https://user-images.githubusercontent.com/3611042/232336724-71df6bf8-94e0-4b08-93fc-089ed70ad8ed.png">
+  </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/yagil/ChatIDE" target="_blank">
-      <img src="https://img.shields.io/github/stars/yagil/ChatIDE?style=social" alt="Github repo stars">
-  </a>
   <a href="https://github.com/yagil/ChatIDE/blob/main/LICENSE" target="_blank">
       <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
   </a>
