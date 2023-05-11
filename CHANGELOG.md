@@ -2,6 +2,12 @@
 
 All notable changes to the "ChatIDE" extension will be documented in this file.
 
+## [0.2.6]
+
+### Added
+- Support for Claude 100K context length ("claude-v1.3-100k")
+- Support for GPT4 32K context length ("gpt-4-32k")
+
 ## [0.2.0]
 
 ### Added
