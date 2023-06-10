@@ -12,10 +12,6 @@
   <a href="https://github.com/yagil/ChatIDE" target="_blank">
       <img src="https://img.shields.io/github/stars/yagil/ChatIDE?style=social" alt="Github repo stars">
   </a>
-  <span> </span>
-  <a href="https://twitter.com/chat_ide" target="_blank">
-      <img src="https://img.shields.io/twitter/url/https/twitter.com/Chat_IDE.svg?style=social&label=Follow%20%40Chat_IDE" alt="Chat_IDE twitter">
-  </a>
 </p>
 <p align="center">
     <b>ChatIDE - AI assistant in your IDE</b><br/>
