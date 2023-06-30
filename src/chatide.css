@@ -78,6 +78,7 @@ h1#chat-title {
   border: none;
   cursor: pointer;
   margin-right: 10px;
+  white-space: nowrap;
 }
 
 .control-btn:hover {
@@ -130,6 +131,7 @@ h1#chat-title {
     color: white;
     border: none;
     cursor: pointer;
+    font-size: 1em;
 }
 
 #send-button:hover {

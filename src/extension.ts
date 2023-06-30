@@ -12,6 +12,7 @@ import { ChatCompletionRequestMessage } from "openai";
 import { APIProvider } from "./apiProvider";
 import { AnthropicProvider, AnthropicParams, convertOpenAIMessagesToAnthropicMessages } from "./anthropic";
 import { OpenAIProvider, OpenAIParams } from "./openai";
+import { CustomLLMProvider } from './custom';
 
 interface ResourcePaths {
     htmlPath: string;
@@ -21,6 +22,10 @@ interface ResourcePaths {
     highlightJsCssPath: string;
     highlightJsScriptPath: string;
 }
+
+interface Preferences {
+    pressEnterToSend: false;
+};
 
 console.log("Node.js version:", process.version);
 
@@ -37,14 +42,21 @@ let selectedCode: string;
 let selectedCodeSentToGpt: string;
 
 let highlightedCodeAwareness: boolean = vscode.workspace.getConfiguration('chatide').get('highlightedCodeAwareness') || false;
+let customServerUrl: string|undefined = vscode.workspace.getConfiguration('chatide').get('customServerUrl') || undefined;
+let pressEnterToSend: boolean = vscode.workspace.getConfiguration('chatide').get('pressEnterToSend') || false;
+
+function gatherPreferences(): Preferences {
+    const pressEnterToSend = vscode.workspace.getConfiguration('chatide').get('pressEnterToSend') || false;
+    return {
+        pressEnterToSend
+    } as Preferences;
+}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
     console.log("activate chatide");
-      
-    resetChat();
-
+    
     context.subscriptions.push(
         vscode.commands.registerCommand('chatide.openSettings', openSettings)
     );
@@ -138,6 +150,15 @@ export function activate(context: vscode.ExtensionContext) {
 
         chatIdePanel.webview.html = getWebviewContent(resourcePaths, configDetails);
 
+        const preferences = gatherPreferences();
+        console.log("preferences", preferences);
+        chatIdePanel.webview.postMessage({
+            command: 'updatePreferences',
+            preferences
+        });
+          
+        resetChat();
+
         chatIdePanel.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
@@ -212,6 +233,19 @@ export function activate(context: vscode.ExtensionContext) {
                     showButton: false
                 });
             }
+            if (e.affectsConfiguration('chatide.pressEnterToSend')) {
+                console.log(`pressEnterToSend changed to ${vscode.workspace.getConfiguration('chatide').get('pressEnterToSend')}`);
+                pressEnterToSend = vscode.workspace.getConfiguration('chatide').get('pressEnterToSend') || false;
+                chatIdePanel.webview.postMessage({
+                    command: 'updatePreferences',
+                    preferences: gatherPreferences(),
+                });
+            }
+
+            if (e.affectsConfiguration('chatide.customServerUrl')) {
+                console.log(`customServerUrl changed to ${vscode.workspace.getConfiguration('chatide').get('customServerUrl')}`);
+                initApiProviderIfNeeded(context, true);
+            }
 
             if (e.affectsConfiguration('chatide.model')) {
                 initApiProviderIfNeeded(context, true);
@@ -258,6 +292,7 @@ function getWebviewContent(
 }
 
 function resetChat() {
+    console.log("Resetting chat");
     // Load the sytem prompt and clear the chat history.
     let systemPrompt: any = vscode.workspace.getConfiguration('chatide').get('systemPrompt');
     if (!systemPrompt) {
@@ -286,7 +321,7 @@ async function getGptResponse(userMessage: string, completionCallback: (completi
   
     const maxTokens = vscode.workspace.getConfiguration("chatide").get("maxLength");
     const model = vscode.workspace.getConfiguration("chatide").get("model")!;
-    const provider = providerFromModel(model.toString());
+    let provider = providerFromModel(model.toString());
     const temperature = vscode.workspace.getConfiguration("chatide").get("temperature");
   
     if (!maxTokens) {
@@ -298,7 +333,7 @@ async function getGptResponse(userMessage: string, completionCallback: (completi
 
     let params: OpenAIParams | AnthropicParams;
 
-    if (provider === "openai") {
+    if (provider === "openai" || provider === "custom") {
         params = {
             model: model.toString(),
             messages: messages,
@@ -314,7 +349,8 @@ async function getGptResponse(userMessage: string, completionCallback: (completi
             max_tokens: Number(maxTokens),
             model: model.toString(),
         };
-    } else {
+    }
+    else {
         vscode.window.showErrorMessage(
             'Unsupported AI provider in the ChatIDE settings. Please add it using the "Open ChatIDE Settings" command and restart the extension.'
         );
@@ -327,11 +363,11 @@ async function getGptResponse(userMessage: string, completionCallback: (completi
             {
                 onUpdate: (completion: string) => {
                     if (completion) {
-                        completionCallback(marked.marked(completion));
+                        completionCallback(marked.marked(completion ?? "<no completion>"));
                     }
                 },
                 onComplete: (message: string) => {
-                    messages.push({"role": "assistant", "content":  marked.marked(message)});
+                    messages.push({"role": "assistant", "content":  marked.marked(message ?? "<no message>")});
                 }
             }
         );
@@ -417,9 +453,15 @@ async function initApiProviderIfNeeded(context: vscode.ExtensionContext, force: 
     }
   
     if (providerType === "anthropic") {
+        console.log("Initializing Anthropic provider...");
         apiProvider = new AnthropicProvider(context);
     } else if (providerType === "openai") {
+        console.log("Initializing OpenAI provider...");
         apiProvider = new OpenAIProvider(context);
+    } 
+    else if (providerType === "custom") {
+        console.log("Initializing custom provider...");
+        apiProvider = new CustomLLMProvider(context, customServerUrl);
     } else {
         vscode.window.showErrorMessage(
             `Invalid provider "${providerType}" in the ChatIDE settings. Please use a valid provider and restart the extension.`

@@ -1,9 +1,22 @@
 const vscode = acquireVsCodeApi();
 
+let gPreferences = {};
+
 document.addEventListener("DOMContentLoaded", () => {
     const messagesContainer = document.getElementById("messages");
   
     document.getElementById("send-button").addEventListener("click", sendMessage);
+
+    // listen for enter and enter + shift:
+    document.getElementById("message-input").addEventListener("keydown", (e) => {
+        // if "pressEnterToSend" is in gPreferences, get it:
+        const pressEnterToSend = gPreferences.pressEnterToSend ?? false;
+        
+        if (pressEnterToSend && e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 
     const messageInputTextArea = document.getElementById('message-input');
     handleTabInTextarea(messageInputTextArea);
@@ -73,6 +86,19 @@ document.addEventListener("DOMContentLoaded", () => {
         case "updateModelConfigDetails":
             document.getElementById('model-name').textContent = message.modelConfigDetails;
             break;
+        case "updatePreferences":
+            gPreferences = message.preferences;
+            if (gPreferences.pressEnterToSend) {
+                document.getElementById('send-button').textContent = "⏎ to Send";
+                document.getElementById('send-button').style.fontSize = '0.8em';
+            } else {
+                console.log('unhiding send-button');
+                document.getElementById('send-button').style.fontSize = '1.1em';
+                document.getElementById('send-button').textContent = "Send";
+            }
+            break;
+        default:
+            throw new Error(`Unknown command: ${message.command}`);
         }
     });
 
