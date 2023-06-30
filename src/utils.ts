@@ -33,7 +33,7 @@ export function getProviderErrorMsg(provider: string, error: any) {
         `; 
     }
 
-    return "Unknown error";
+    return `Error: ${error}`;
 } 
 
 export async function promptForApiKey(provider: string, context: vscode.ExtensionContext) {
@@ -54,7 +54,7 @@ export async function promptForApiKey(provider: string, context: vscode.Extensio
 
     if (apiKey) {
         await context.secrets.store(secretStorageKey, apiKey);
-        vscode.window.showInformationMessage('API key stored successfully.');
+        vscode.window.showInformationMessage(`API key stored successfully (under '${secretStorageKey}').`);
     } else {
         vscode.window.showErrorMessage('No API key entered. Please enter your API key to use ChatIDE.');
     }
@@ -63,6 +63,9 @@ export async function promptForApiKey(provider: string, context: vscode.Extensio
 export function providerFromModel(model: string) {
     if (model.startsWith("gpt")) {
         return "openai";
+    }
+    if (model === "custom") {
+        return "custom";
     }
     return "anthropic";
 }
