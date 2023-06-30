@@ -37,7 +37,7 @@ export function getProviderErrorMsg(provider: string, error: any) {
 } 
 
 export async function promptForApiKey(provider: string, context: vscode.ExtensionContext) {
-    if (!supportedProviders.includes(provider)) {
+    if (!supportedProviders.includes(provider.toLowerCase())) {
         vscode.window.showErrorMessage(`Invalid provider "${provider}" in the ChatIDE settings. Please use a valid provider and restart the extension.`);
         return;
     }

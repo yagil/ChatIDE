@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('chatide.updateOpenAiApiKey', async () => {
-            await promptForApiKey("openai", context);
+            await promptForApiKey("openAi", context);
         })
     );
 
