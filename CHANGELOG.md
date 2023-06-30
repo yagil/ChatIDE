@@ -2,6 +2,16 @@
 
 All notable changes to the "ChatIDE" extension will be documented in this file.
 
+## [0.2.8]
+### Bug fix
+- Changing OpenAI API key would sometimes not work
+
+## [0.2.7]
+
+### Added
+- New setting that enables sending messages using Enter key press (enable in settings)
+- Support for custom server URL (must be OpenAI 'compatible')
+
 ## [0.2.6]
 
 ### Added
