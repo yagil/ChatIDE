@@ -47,7 +47,7 @@ To use ChatGPT / Claude in ChatIDE, you need to procure API Keys from OpenAI / A
 
 1. Bring up ChatIDE with `Cmd + Shift + i` (or `Ctrl + Shift + i` on non-Apple platforms).
 2. Choose your AI model. Currently supported: 
-    - `'gpt-4'`,  `'gpt-3.5-turbo'`  (OpenAI)
+    - `'gpt-4'`, `'gpt-4-0613'`,`'gpt-3.5-turbo'`,`'gpt-3.5-turbo-16k'`  (OpenAI)
     - `'claude-v1.3'` (Anthropic)
 4. On first usage, you'll be prompted to enter your API key for your chosen AI providers (will be stored in VSCode `secretStorage`).
 5. Enjoy!
@@ -61,7 +61,7 @@ To use ChatGPT / Claude in ChatIDE, you need to procure API Keys from OpenAI / A
 - Run ChatIDE with `Cmd + Shift + i`. You'll be asked for your OpenAI / Anthropic API key on first time you use the model.
   - Note: your API keys will be stored in [VS Code's `secretStorage`](https://code.visualstudio.com/api/references/vscode-api#SecretStorage)
 <p align="center">
-  <img width="891" alt="image" src="https://user-images.githubusercontent.com/3611042/232337392-71867aa4-17fc-4328-892e-7a2fff1d5bce.png">
+  <img width="891" alt="image" src="https://github.com/yagil/ChatIDE/assets/3611042/ff80113a-018e-4576-bab2-3dec1dbc2b49">
 </p>
 
 ### Updating your API key
@@ -79,7 +79,6 @@ To use ChatGPT / Claude in ChatIDE, you need to procure API Keys from OpenAI / A
 
 1. There's currently no way to stop the model from generating. You need to wait until it's done.
 2. Closing the ChatIDE pane while the model is generating might lead to a non-recoverable error. You'll need to restart VS Code to use ChatIDE again.
-3. Closing / re-opening the ChatIDE pane does not reset the messages history. You can reset the message history by clicking the "Reset Chat" button (don't do this while the model is generating!)
 
 ## Warning
 
