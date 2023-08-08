@@ -32,6 +32,12 @@
 
 [![Video demo](https://chatide.dev/assets/example.png)](https://user-images.githubusercontent.com/3611042/232339222-c0532f49-6772-46c5-b29e-be00f77c1c1c.mov) 
 
+## Build and run from source
+
+1. Clone this repository and install the npm dependencies
+2. Open the project in VS Code
+3. Press `F5` to launch the extension in debug mode
+
 ## Installation
 
 Grab the latest ChatIDE version from the Extensions Marketplace:<br>
