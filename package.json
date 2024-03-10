@@ -70,9 +70,19 @@
         "chatide.model": {
           "order": 0,
           "type": "string",
-          "default": "gpt-3.5-turbo",
-          "enum": ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-0613", "gpt-4-32k", "claude-v1.3", "claude-v1.3-100k", "custom"],
-          "enumDescriptions": ["GPT 3.5 (OpenAI)", "GPT 3.5 (16K context)", "GPT 4 (OpenAI)" ,"GPT 4 0613 (OpenAI)", "GPT 4 (32K context)" ,"Claude v1.3 (Anthropic)", "Claude v1.3 (100K context)", "Custom LLM Server (OpenAI Compatible)"],
+          "default": "gpt-4-0125-preview",
+          "enum": [
+            "gpt-4-0125-preview",
+            "gpt-4",
+            "claude-3-opus-20240229",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "GPT 4 0125 Preview (OpenAI)",
+            "GPT 4 (OpenAI)",
+            "Claude 3 Opus (Anthropic)",
+            "Custom LLM Server (OpenAI Compatible)"
+          ],
           "description": "Select the AI model. You must have your own API key to use a model.",
           "scope": "window"
         },
@@ -155,7 +165,7 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.4.3",
+    "@anthropic-ai/sdk": "^0.17.1",
     "dotenv": "^16.0.3",
     "marked": "^4.3.0",
     "openai": "^3.2.1"

@@ -10,7 +10,7 @@ import { getProviderErrorMsg, promptForApiKey, providerFromModel } from './utils
 import { ChatCompletionRequestMessage } from "openai";
 
 import { APIProvider } from "./apiProvider";
-import { AnthropicProvider, AnthropicParams, convertOpenAIMessagesToAnthropicMessages } from "./anthropic";
+import { AnthropicProvider, AnthropicParams } from "./anthropic";
 import { OpenAIProvider, OpenAIParams } from "./openai";
 import { CustomLLMProvider } from './custom';
 
@@ -344,10 +344,12 @@ async function getGptResponse(userMessage: string, completionCallback: (completi
         };
     } else if (provider === "anthropic") {
         params = {
-            prompt: convertOpenAIMessagesToAnthropicMessages(messages),
+            messages,
             // eslint-disable-next-line @typescript-eslint/naming-convention
             max_tokens: Number(maxTokens),
             model: model.toString(),
+            temperature: Number(temperature),
+            stream: true
         };
     }
     else {

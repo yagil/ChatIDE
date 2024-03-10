@@ -1,45 +1,20 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from "vscode";
-import { Client, HUMAN_PROMPT, AI_PROMPT, CompletionResponse } from "./anthropic-sdk-simple";
 import { APIProvider } from "./apiProvider";
 
+import Anthropic from '@anthropic-ai/sdk';
+import { MessageParam } from "@anthropic-ai/sdk/resources";
+
 export interface AnthropicParams {
-    prompt: string;
+    messages: Array<MessageParam>;
     max_tokens: number;
     model: string;
-}
-
-const PROMPT_SUFFIX = "IMPORTANT: Please respond in Markdown format when appropriate.";
-
-/*
-* A function to convert from OpenAI format message array to Anthropic format message blob
-* 
-* Example openAI messages:
-*   messages = [{"role":"user", "content": "hi"}, {"role":"assistant", "content": "hello"}]
-*
-* Example anthropic messages:
-*   message = "\n\nHuman: Hello .\n\nAssistant: Hi! How are you?"
-*/
-export function convertOpenAIMessagesToAnthropicMessages(messages: any) {
-    let message = "";
-    for (let i = 0; i < messages.length; i++) {
-        const role = messages[i].role;
-        const content = messages[i].content;
-        if (role === "system") {
-            message += `\n\nHuman: ${content}. ${PROMPT_SUFFIX}`;
-        }
-        else if (role === "user") {
-            message += `\n\nHuman: ${content}`;
-        } else if (role === "assistant") {
-            message += `\n\nAssistant: ${content}`;
-        }
-
-    }
-    return message+`${AI_PROMPT}`;
+    stream: boolean;
+    temperature?: number;
 }
 
 export class AnthropicProvider extends APIProvider {
-    private client: Client | undefined;
+    private client: Anthropic | undefined;
     private context: vscode.ExtensionContext;
   
     constructor(context: vscode.ExtensionContext) {
@@ -61,7 +36,9 @@ export class AnthropicProvider extends APIProvider {
             }
         }
   
-        this.client = new Client(apiKey);
+        this.client = new Anthropic({
+            apiKey
+        });
     }
 
     async completeStream(params: AnthropicParams, callbacks: any) {
@@ -69,27 +46,28 @@ export class AnthropicProvider extends APIProvider {
             throw new Error("Anthropic API client is not initialized.");
         }
 
+        let anthropicMessage = "";
+        const systemMessage = params.messages.find((message) => message.role === "system");
+        const messagesWithoutSystem = params.messages.filter((message) => message.role !== "system");
         try {
-            const completeMessage = await this.client.completeStream(
-                {
-                    prompt: `${HUMAN_PROMPT} ${params.prompt}`,
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    stop_sequences: [HUMAN_PROMPT],
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    max_tokens_to_sample: params.max_tokens,
-                    model: params.model,
-                },
-                {
-                    onOpen: callbacks.onOpen,
-                    onUpdate: (completion: CompletionResponse) => {
-                        if (completion.completion) {
-                            callbacks.onUpdate(completion.completion);
-                        }   
-                    },
-                }
-            );
+            const stream = await this.client.messages.create({
+                max_tokens: params.max_tokens,
+                system: systemMessage?.content as string|undefined,
+                messages: messagesWithoutSystem,
+                model: params.model,
+                stream: params.stream,
+            });
             if (callbacks.onComplete) {
-                callbacks.onComplete(completeMessage.completion);
+                for await (const messageStreamEvent of stream) {
+                    const { type, delta } = messageStreamEvent;
+                    if (type === "content_block_delta") {
+                        anthropicMessage += delta.text;
+                        callbacks.onUpdate(anthropicMessage);
+                    } else if (type === "message_stop") {
+                        console.log("MessageStreamEvent:", messageStreamEvent);
+                        callbacks.onComplete(anthropicMessage);
+                    }
+                }
             }
         } catch (error: any) {
             console.error("Error fetching stream:", error);
