@@ -15,8 +15,6 @@ import { AnthropicProvider, AnthropicParams } from "./anthropic";
 import { OpenAIProvider, OpenAIParams } from "./openai";
 import { CustomLLMProvider } from './custom';
 
-
-
 interface ResourcePaths {
     htmlPath: string;
     chatideJsPath: string;
@@ -49,6 +47,7 @@ let highlightedCodeAwareness: boolean = vscode.workspace.getConfiguration('chati
 let customServerUrl: string | undefined = vscode.workspace.getConfiguration('chatide').get('customServerUrl') || undefined;
 let pressEnterToSend: boolean = vscode.workspace.getConfiguration('chatide').get('pressEnterToSend') || false;
 let autoSaveEnabled: boolean = vscode.workspace.getConfiguration('chatide').get('autoSaveEnabled') || true;
+let currentSessionName: string|undefined = undefined;
 
 function gatherPreferences(): Preferences {
     const pressEnterToSend = vscode.workspace.getConfiguration('chatide').get('pressEnterToSend') || false;
@@ -309,6 +308,7 @@ function resetChat() {
         return;
     }
 
+    currentSessionName = undefined;
     messages = [];
     messages.push({ "role": "system", "content": systemPrompt.toString() });
 }
@@ -411,9 +411,12 @@ async function autoSaveMessages() {
         fs.mkdirSync(fullPath, { recursive: true });
     }
 
-    const timestamp = new Date().toISOString().replace(/:/g, '-');
-    const fileName = `chatide-chat-${timestamp}.json`;
-    const filePath = path.join(fullPath, fileName);
+    if (!currentSessionName) {
+        const timestamp = new Date().toISOString().replace(/:/g, '-');
+        currentSessionName = `chatide-chat-${timestamp}.json`;
+    }
+
+    const filePath = path.join(fullPath, currentSessionName);
 
     const content = JSON.stringify(messages, null, 2);
     fs.writeFile(filePath, content, (err) => {
