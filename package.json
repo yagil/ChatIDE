@@ -3,7 +3,7 @@
   "publisher": "ChatIDE",
   "displayName": "ChatIDE - Coding Assistant (GPT/ChatGPT, Claude)",
   "description": "ChatIDE is an open-source coding and debugging assistant that supports GPT/ChatGPT (OpenAI), and Claude (Anthropic). Supported models: [gpt4, gpt-3.5-turbo, claude-v1.3]. Import/export your conversation history. Bring up the assistant in a side pane by pressing cmd+shift+i.",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
@@ -132,6 +132,18 @@
           "description": "Custom OpenAI-compatible server URL (Example http://localhost:1234/v1). Note: '/chat/completions' will be appended to the URL.",
           "scope": "window",
           "editorType": "string"
+        },
+        "chatide.autoSaveDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "The directory where the conversation will be automatically saved. If empty, auto-save will be disabled.",
+          "scope": "window"
+         },
+         "chatide.autoSaveEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "When enabled, the conversation will be automatically saved to the directory specified in 'chatide.autoSaveDirectory'.",
+          "scope": "window"
         }
       }
     }

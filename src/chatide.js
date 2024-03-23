@@ -4,14 +4,14 @@ let gPreferences = {};
 
 document.addEventListener("DOMContentLoaded", () => {
     const messagesContainer = document.getElementById("messages");
-  
+
     document.getElementById("send-button").addEventListener("click", sendMessage);
 
     // listen for enter and enter + shift:
     document.getElementById("message-input").addEventListener("keydown", (e) => {
         // if "pressEnterToSend" is in gPreferences, get it:
         const pressEnterToSend = gPreferences.pressEnterToSend ?? false;
-        
+
         if (pressEnterToSend && e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
@@ -20,14 +20,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const messageInputTextArea = document.getElementById('message-input');
     handleTabInTextarea(messageInputTextArea);
-    
-    messageInputTextArea.addEventListener('input', function() {
+
+    messageInputTextArea.addEventListener('input', function () {
         autoResize(this);
     });
 
     document.getElementById('reset-button').addEventListener('click', () => {
         vscode.postMessage({
             command: 'resetChat'
+        });
+    });
+
+    document.getElementById('auto-save-checkbox').addEventListener('change', (event) => {
+        vscode.postMessage({
+            command: 'toggleAutoSave',
+            enabled: event.target.checked
         });
     });
 
@@ -51,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('show-code').addEventListener('click', () => {
         vscode.postMessage({ command: 'navigateToHighlightedCode' });
-    });    
+    });
 
     window.addEventListener("message", (event) => {
         const message = event.data;
@@ -151,21 +158,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         highlightCodeBlocks(messageElement);
-        
+
         messagesContainer.insertAdjacentElement("beforeend", messageElement);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-    
+
     function sendMessage() {
         const input = document.getElementById("message-input");
         const userMessage = input.value;
         input.value = "";
         autoResize(input);
-      
+
         if (!userMessage) {
             return;
         }
-      
+
         vscode.postMessage(
             {
                 command: "getGptResponse",
@@ -186,7 +193,7 @@ function escapeHtml(html) {
         { regex: /"/g, replacement: '&quot;' },
         { regex: /'/g, replacement: '&#039;' },
     ];
-  
+
     html.split(codeBlockRegex).forEach((segment, index) => {
         // If the index is even, it's not a code block.
         // If the index is odd, it's a code block.
@@ -201,7 +208,7 @@ function escapeHtml(html) {
         }
         escapedHtml += segment;
     });
-  
+
     return escapedHtml;
 }
 

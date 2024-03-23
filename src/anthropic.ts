@@ -47,7 +47,9 @@ export class AnthropicProvider extends APIProvider {
         }
 
         let anthropicMessage = "";
+        // @ts-ignore
         const systemMessage = params.messages.find((message) => message.role === "system");
+        // @ts-ignore
         const messagesWithoutSystem = params.messages.filter((message) => message.role !== "system");
         try {
             const stream = await this.client.messages.create({
@@ -58,6 +60,7 @@ export class AnthropicProvider extends APIProvider {
                 stream: params.stream,
             });
             if (callbacks.onComplete) {
+                // @ts-ignore
                 for await (const messageStreamEvent of stream) {
                     const { type, delta } = messageStreamEvent;
                     if (type === "content_block_delta") {
