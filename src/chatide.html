@@ -31,8 +31,10 @@
             <div id="status-bar">
               <span id="highlighted-code-status">${codeHighlightStatusCopy}</span>
               <button id="show-code" style="display:none;">Show code</button>
-              <label for="auto-save-checkbox">Auto-save:</label>
-              <input type="checkbox" id="auto-save-checkbox" checked={autoSaveEnabled ? 'checked' : ''}>
+              <div style="display: flex; flex-direction: row; align-items: center;">
+                <label for="auto-save-checkbox">Auto-save Chats:</label>
+                <input type="checkbox" id="auto-save-checkbox" checked={autoSaveEnabled ? 'checked' : ''}>
+              </div>
             </div>
         </div>
         <link rel="stylesheet" href="${paths.highlightJsCssPath}">
