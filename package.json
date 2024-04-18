@@ -136,8 +136,9 @@
           "editorType": "string"
         },
         "chatide.autoSaveDirectory": {
+          "order": 0,
           "type": "string",
-          "default": "",
+          "default": "~/.cache/chatide/",
           "description": "The directory where the conversation will be automatically saved. If empty, auto-save will be disabled.",
           "scope": "window"
          },
