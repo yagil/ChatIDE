@@ -70,16 +70,16 @@
         "chatide.model": {
           "order": 0,
           "type": "string",
-          "default": "gpt-4-0125-preview",
+          "default": "gpt-4o",
           "enum": [
-            "gpt-4-0125-preview",
+            "gpt-4o",
             "gpt-4-turbo",
             "gpt-4",
             "claude-3-opus-20240229",
             "custom"
           ],
           "enumDescriptions": [
-            "GPT 4 0125 Preview (OpenAI)",
+            "GPT 4o (OpenAI)",
             "GPT 4 Turbo (OpenAI)",
             "GPT 4 (OpenAI)",
             "Claude 3 Opus (Anthropic)",
