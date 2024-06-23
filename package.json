@@ -3,7 +3,7 @@
   "publisher": "ChatIDE",
   "displayName": "ChatIDE - Coding Assistant (GPT/ChatGPT, Claude)",
   "description": "ChatIDE is an open-source coding and debugging assistant that supports GPT/ChatGPT (OpenAI), and Claude (Anthropic). Supported models: [gpt4, gpt-3.5-turbo, claude-v1.3]. Import/export your conversation history. Bring up the assistant in a side pane by pressing cmd+shift+i.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
@@ -55,6 +55,10 @@
       {
         "command": "chatide.updateAnthropicApiKey",
         "title": "Update your Anthropic API Key for ChatIDE"
+      },
+      {
+        "command": "chatide.toggleFileTree",
+        "title": "Toggle File Tree"
       }
     ],
     "keybindings": [
@@ -62,6 +66,11 @@
         "key": "cmd+shift+i",
         "command": "chatide.start",
         "when": "editorTextFocus"
+      },
+      {
+        "key": "cmd+shift+f",
+        "command": "chatide.toggleFileTree",
+        "when": "chatIdeActive"
       }
     ],
     "configuration": {
@@ -76,6 +85,7 @@
             "gpt-4-turbo",
             "gpt-4",
             "claude-3-opus-20240229",
+            "claude-3-5-sonnet-20240620",
             "custom"
           ],
           "enumDescriptions": [
@@ -83,6 +93,7 @@
             "GPT 4 Turbo (OpenAI)",
             "GPT 4 (OpenAI)",
             "Claude 3 Opus (Anthropic)",
+            "Claude 3.5 Sonnet (Anthropic)",
             "Custom LLM Server (OpenAI Compatible)"
           ],
           "description": "Select the AI model. You must have your own API key to use a model.",
@@ -91,7 +102,7 @@
         "chatide.systemPrompt": {
           "order": 1,
           "type": "string",
-          "default": "You are a helpful programming assistant running inside VS Code. The assistant always generates accurate and succinct messages. The assistant doesn't repeat previous information, and doesn't launch into long explanations unless asked. Always provide code inside triple backticks.",
+          "default": "You are an extra genius VSCode programmer extension, tasked with writing full implementations of code and algorithms based on natural language tasks and objectives from the user. Your goal is to produce high-quality, efficient, and well-documented code that meets the user's requirements.\nYou will be provided with two inputs:\n1. A task description outlining the user's requirements and objectives.\n2. Any context with existing code that may be relevant to the task (this may be empty if it's a new implementation).\nHere are your instructions:\n1. Carefully read and analyze the task description provided in the user's message.\n2. Review any existing code provided in the user's ,essage context.\n3. Before writing any code, create a brief plan outlining your approach to solving the task. Include this plan in the beginning of your answer.\n4. Implement the requested code or algorithm based on the task description. Follow these guidelines:\n   a. Use clear and descriptive variable and function names.\n   b. Include comments to explain complex logic or algorithms.\n   c. Follow best practices and design patterns appropriate for the language and task.\n   d. Ensure your code is efficient and optimized where possible.\n   e. Handle potential edge cases and errors gracefully.\n5. If the task involves modifying existing code, clearly indicate which parts are new or modified.\n6. After implementing the code, provide a brief explanation of how your solution works and any important design decisions you made. \n7. If applicable, suggest any potential improvements or alternative approaches that the user might consider.\n8. Format your entire response in markdown as follows:\n   - Your implementation plan here\n   - Your full implemented code here\n   - Your explanation of the solution here\n   - Any suggestions for improvements or alternatives (if applicable)\n9. Remember to:\n   - Test your code mentally to ensure it works as expected.\n   - Consider scalability and maintainability in your implementation.\n   - Use appropriate data structures and algorithms for optimal performance.\n   - Adhere to the specific language's conventions and best practices.\n   - Always provide full code implementations without leaving any placeholders or examples.\n",
           "markdownDescription": "The 'system' prompt provided to the model. Keep in mind that some models pay stronger attention to the system prompt than others. For models that don't have a dedciated affordance for system prompts, this will be prepended to the first user prompt.",
           "scope": "window",
           "editorType": "string",
@@ -136,16 +147,43 @@
           "editorType": "string"
         },
         "chatide.autoSaveDirectory": {
-          "order": 0,
+          "order": 7,
           "type": "string",
           "default": "~/.cache/chatide/",
           "description": "The directory where the conversation will be automatically saved. If empty, auto-save will be disabled.",
           "scope": "window"
-         },
-         "chatide.autoSaveEnabled": {
+        },
+        "chatide.autoSaveEnabled": {
+          "order": 8,
           "type": "boolean",
           "default": true,
           "description": "When enabled, the conversation will be automatically saved to the directory specified in 'chatide.autoSaveDirectory'.",
+          "scope": "window"
+        },
+        "chatide.includeFileTreeInContext": {
+          "order": 9,
+          "type": "boolean",
+          "default": false,
+          "description": "When enabled, selected files from the file tree will be included in the message context.",
+          "scope": "window"
+        },
+        "chatide.ignoredDirectories": {
+          "order": 10,
+          "type": "array",
+          "default": [".git", "node_modules", "dist", "build"],
+          "description": "List of directories to ignore in the file tree view.",
+          "items": {
+            "type": "string"
+          },
+          "scope": "window"
+        },
+        "chatide.fileTreeWidth": {
+          "order": 11,
+          "type": "number",
+          "default": 250,
+          "description": "Width of the file tree view in pixels.",
+          "minimum": 100,
+          "maximum": 500,
           "scope": "window"
         }
       }

@@ -1,89 +1,109 @@
-body,
-html {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #161616;
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: #161616;
 }
 
-pre,
-code {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+#main-container {
+    display: flex;
+    height: 100vh;
+}
+
+#file-tree-container {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    height: 100%;
+    overflow-y: auto;
+    flex: 0 0 auto;
+    width: 250px;
+}
+
+#file-tree-container.hidden {
+    display: none;
+}
+
+#resizer {
+    width: 5px;
+    background: #555;
+    cursor: col-resize;
+    flex: 0 0 auto;
 }
 
 #chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
 }
 
 #chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: black;
-  padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: black;
+    padding: 16px;
 }
 
 h1#chat-title {
-  margin: 0;
-  font-weight: 500;
-  color: white;
-  font-size: 1.3em;
+    margin: 0;
+    font-weight: 500;
+    color: white;
+    font-size: 1.3em;
 }
 
 #config-details {
-  color:#ccc;
-  font-size: x-small;
+    color:#ccc;
+    font-size: x-small;
 }
 
 #model-prefix {
-  color: #888;
+    color: #888;
 }
 
 #messages {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 16px;
-  word-break: break-word; /* break words if necessary */
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px;
+    word-break: break-word;
 }
 
 .user-message,
 .assistant-message,
 .system-message,
 .extension-message {
-  margin-bottom: 8px;
-  padding: 8px;
-  word-wrap: break-word; /* break words if necessary */
-  border-radius: 5px;
-  max-width: 100%; /* limit the width to 100% of the container */
-  overflow-wrap: break-word; /* break long words if necessary */
+    margin-bottom: 8px;
+    padding: 8px;
+    word-wrap: break-word;
+    border-radius: 5px;
+    max-width: 100%;
+    overflow-wrap: break-word;
 }
 
 #chat-control {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .control-btn {
-  font-size: smaller;
-  padding: 5px 10px;
-  border-radius: 5px;
-  background-color: #1d1d1d;
-  color: rgb(195, 195, 195);
-  border: none;
-  cursor: pointer;
-  margin-right: 10px;
-  white-space: nowrap;
+    font-size: smaller;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: #1d1d1d;
+    color: rgb(195, 195, 195);
+    border: none;
+    cursor: pointer;
+    margin-right: 10px;
+    white-space: nowrap;
 }
 
 .control-btn:hover {
-  background-color: #292929;
-  color:white;
+    background-color: #292929;
+    color:white;
 }
 
 .user-message {
@@ -97,31 +117,33 @@ h1#chat-title {
 }
 
 .system-message {
-  background-color: #332d45;
-  color: rgb(178, 120, 241);
-  margin-bottom: 20px !important;
+    background-color: #332d45;
+    color: rgb(178, 120, 241);
+    margin-bottom: 20px !important;
 }
 
 .extension-message {
-  background-color: #332d45;
-  color: rgb(241, 120, 120);
-  margin-bottom: 20px !important;
+    background-color: #332d45;
+    color: rgb(241, 120, 120);
+    margin-bottom: 20px !important;
 }
 
 #message-input {
     width: 90%;
     min-height: 36px;
-    max-height: 160px; /* limit the maximum height */
+    max-height: 160px;
     resize: none;
     outline: none;
     border: 1px solid #ccc;
     padding: 8px;
     box-sizing: border-box;
-    overflow-y: auto; /* allow scrolling when the content exceeds the maximum height */
-    white-space: pre-wrap; /* wrap the text */
-    word-wrap: break-word; /* break words if necessary */
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
     font-size: 13px;
+    background-color: #2d2d2d;
+    color: #d4d4d4;
 }
 
 #send-button {
@@ -141,22 +163,19 @@ h1#chat-title {
 .chat-bar {
     display: flex;
     padding: 8px;
+    background-color: #1e1e1e;
 }
 
 #chat-logo {
-  width: 20px;
-  border-radius: 2px;
-  margin-right: 8px;
+    width: 20px;
+    border-radius: 2px;
+    margin-right: 8px;
 }
 
 #logo-container {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-}
-
-b {
-  font-weight: medium;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
 }
 
 #status-bar {
@@ -187,45 +206,62 @@ b {
 }
 
 .white-text {
-  color: white;
+    color: white;
 }
 
 .code-block-wrapper {
-  position: relative;
-  display: block;
-  margin-bottom: 1em;
-  background-color: #282c34;
-  padding: 0.5em;
-  border-radius: 5px;
+    position: relative;
+    display: block;
+    margin-bottom: 1em;
+    background-color: #282c34;
+    padding: 0.5em;
+    border-radius: 5px;
 }
 
 .copy-code-button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin: 10px 10px 0 0;
-  font-size: 12px;
-  padding: 5px 7px;
-  background-color: #353840;
-  border-radius: 5px;
-  color: white;
-  border: none;
-  cursor: pointer;
-  z-index: 1;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 10px 10px 0 0;
+    font-size: 12px;
+    padding: 5px 7px;
+    background-color: #353840;
+    border-radius: 5px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 1;
 }
 
 #config-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    cursor: pointer;
 }
 
 #settings-button {
-  background-color:black;
-  border: none;
-  margin-left: 5px;
-  color: white;
-  font-size:large;
-  cursor: pointer;
+    background-color:black;
+    border: none;
+    margin-left: 5px;
+    color: white;
+    font-size:large;
+    cursor: pointer;
+}
+
+#file-tree ul {
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+#file-tree li {
+    margin: 5px 0;
+}
+
+#file-tree .folder {
+    cursor: pointer;
+}
+
+#file-tree .file {
+    cursor: default;
 }
