@@ -128,6 +128,14 @@ document.addEventListener("DOMContentLoaded", () => {
             throw new Error(`Unknown role: ${role}`);
         }
 
+        function isUserScrolledToBottom() {
+            const thresholdPercentage = 2.5;
+            const thresholdPixels = messagesContainer.clientHeight * (thresholdPercentage / 100);
+            const distanceFromBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
+            return distanceFromBottom < thresholdPixels;
+        }
+        const atBottomBeforeInsert = isUserScrolledToBottom();
+
         let messageElement;
 
         if (streaming) {
@@ -160,7 +168,10 @@ document.addEventListener("DOMContentLoaded", () => {
         highlightCodeBlocks(messageElement);
 
         messagesContainer.insertAdjacentElement("beforeend", messageElement);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        if (role !== 'assistant' || atBottomBeforeInsert) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
     }
 
     function sendMessage() {
