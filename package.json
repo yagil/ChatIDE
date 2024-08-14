@@ -3,7 +3,7 @@
   "publisher": "ChatIDE",
   "displayName": "ChatIDE - Coding Assistant (GPT/ChatGPT, Claude)",
   "description": "ChatIDE is an open-source coding and debugging assistant that supports GPT/ChatGPT (OpenAI), and Claude (Anthropic). Supported models: [gpt4, gpt-3.5-turbo, claude-v1.3]. Import/export your conversation history. Bring up the assistant in a side pane by pressing cmd+shift+i.",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "license": "MIT",
   "icon": "assets/icon.jpg",
   "engines": {
@@ -73,17 +73,13 @@
           "default": "gpt-4o",
           "enum": [
             "gpt-4o",
+            "claude-3-5-sonnet-20240620",
+            "gpt-4o-2024-08-06",
+            "claude-3-opus-20240229",
+            "chatgpt-4o-latest",
             "gpt-4-turbo",
             "gpt-4",
-            "claude-3-opus-20240229",
             "custom"
-          ],
-          "enumDescriptions": [
-            "GPT 4o (OpenAI)",
-            "GPT 4 Turbo (OpenAI)",
-            "GPT 4 (OpenAI)",
-            "Claude 3 Opus (Anthropic)",
-            "Custom LLM Server (OpenAI Compatible)"
           ],
           "description": "Select the AI model. You must have your own API key to use a model.",
           "scope": "window"
